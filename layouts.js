@@ -301,7 +301,8 @@
           });
           for (let s = 0; s < HIRE.classroom.seats; s++) {
             const cx = x + (s - 1) * 0.5;
-            const cz = z + td / 2 + chairD / 2 + 0.02;
+            // Sit on the foyer (−Z) side, facing +Z / screens — not under the cloth
+            const cz = z - td / 2 - chairD / 2 - 0.02;
             if (ctx.throwOn && inThrowCone(cx, cz, looks, 0.12)) continue;
             if (!pointInPoly(cx, cz, ctx.room)) continue;
             chairs.push({
@@ -390,8 +391,8 @@
     const maxX = box.maxX - wall - 0.4;
     const minZ = box.minZ + wall + 0.6;
     const maxZ = box.maxZ - wall - (ctx.screenKeep || ctx.throwOn ? INDUSTRY.screenFront : 1.2);
-    // Prefer left half when the room is wide (Ballroom 1 left demo).
-    const useLeft = (maxX - minX) > 8;
+    // Full width on a single bay. Left half only on a wide combined plate.
+    const useLeft = (maxX - minX) > 16;
     const x0 = useLeft ? minX : minX;
     const x1 = useLeft ? Math.min(minX + Math.max(5.4, (maxX - minX) * 0.62), maxX) : maxX;
     const z0 = minZ;

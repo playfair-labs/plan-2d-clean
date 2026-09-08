@@ -922,12 +922,23 @@ function invalidateFloorMax(){
 }
 function updateCounts(){
   const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
+  const nTrestle = items.filter(i=>i.type==='trestle').length;
+  const nChairs = items.filter(i=>i.type==='chair').length;
   const need = tablesNeeded();
   const p = parseInt(brief.people, 10);
   const floor = floorMaxSnapshot();
   const maxG = floor.guests;
   let text = '';
-  if (Number.isFinite(p) && p > 0) {
+  if (!isBanquetPackStyle()){
+    const covers = roomSeats() || (Number.isFinite(p)?p:0);
+    const bits = [];
+    if (covers) bits.push(covers+' covers');
+    if (n) bits.push(n+' rounds');
+    if (nTrestle) bits.push(nTrestle+' trestles');
+    if (nChairs) bits.push(nChairs+' chairs');
+    if (maxG) bits.push('max '+maxG);
+    text = bits.join(' · ');
+  } else if (Number.isFinite(p) && p > 0) {
     text = 'Guests '+p+' · '+n+' tables';
     if (need && n !== need) text += ' · need '+need;
     if (maxG && p > maxG) text += ' · over max '+maxG;
@@ -2684,6 +2695,7 @@ function setRoom(id, opts){
   } else if (!(opts && opts.keepItems)){
     items = [];
     selectedId=null; selectedSeat=null; seq=0; stageSeq=0; danceSeq=0;
+    if (opts && opts.fresh) brief.people = '';
   }
   fitRoomView(id);
   document.querySelectorAll('.sync-room').forEach(el=>{ if (el.value!==id) el.value=id; });
@@ -2725,6 +2737,8 @@ function applyLayoutItems(packed, extras){
 }
 function applyStyleMax(styleVal){
   const s = String(styleVal||brief.style||'');
+  brief.style = s;
+  applyBriefToDom();
   if (s.indexOf('banquet')===0){
     runMaxPax();
     return;
@@ -3368,6 +3382,8 @@ setTimeout(()=>{ recomputeFloorMaxAlgo(); updateCounts(); }, 0);
     items.push(it);
     return it;
   }
+  const demoQ = /(?:\?|&|#)demo=([ABC])/i.exec(location.search+' '+location.hash);
+  if (demoQ) setTimeout(()=>{ const fn=window.__planDemos[demoQ[1].toUpperCase()]; if (fn) fn(); }, 120);
   window.__planDemos = {
     A(){
       setRoom('grand-1', { fresh:true });
