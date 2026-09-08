@@ -32,7 +32,8 @@
   .ui-tog button.on { color:var(--ink); border-color:var(--line); background:var(--soft); }
   .shell { flex:1; display:flex; min-height:0; }
   .rail {
-    width:min(340px, 28vw); min-width:280px; flex-shrink:0; background:var(--panel);
+    /* proto type chips need width — OK for prototype */
+    width:min(340px, 28vw); min-width:min(340px, 42vw); flex-shrink:0; background:var(--panel);
     border-right:1px solid var(--line); padding:14px 14px 16px;
     display:flex; flex-direction:column; gap:12px; overflow:auto;
   }
@@ -152,28 +153,41 @@
   .ctx-menu .sec-lab { padding:8px 10px 2px; color:#8a8680; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
   .ctx-menu .sec-lab:first-child { padding-top:4px; }
 
-  .proto-type {
-    display:flex; align-items:center; gap:4px; flex-wrap:wrap;
-    margin-left:auto; padding-left:8px;
-    border-left:1px solid #3a3834;
+  /* Prototype: per-field type chips beside each rail item (not product) */
+  .rail { width: min(380px, 46vw) !important; min-width: 300px !important; }
+  .rail-field {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 8px;
+    row-gap: 4px;
   }
-  .proto-type .proto-lab { color:#8a8680; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
-  .proto-type button {
-    height:28px; min-width:32px; padding:0 8px; border-radius:8px;
-    border:1px solid #3a3834; background:#242220; color:var(--ink);
-    font-size:12px; font-weight:700; cursor:pointer;
+  .rail-field > label,
+  .rail-field > .q,
+  .rail-field > .tiny-lab,
+  .rail-field > input,
+  .rail-field > select,
+  .rail-field > .fixed,
+  .rail-field > .step,
+  .rail-field > div:not(.field-type) {
+    grid-column: 1;
+    min-width: 0;
   }
-  .proto-type button.on { border-color:#c9a227; color:#c9a227; }
-  .rail, .sec, .ctx-menu, .top {
-    font-size: var(--ui-font-px, 13px);
-    font-weight: var(--ui-font-w, 500);
+  .rail-field > .field-type {
+    grid-column: 2;
+    grid-row: 1 / span 8;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 2px;
   }
-  .rail label, .rail .q, .rail .tiny-lab, .rail .fixed, .rail .quiet-btn,
-  .rail input, .rail select, .rail summary, .sec button, .ctx-menu button {
-    font-size: inherit;
-    font-weight: inherit;
+  .field-type button {
+    height: 22px; min-width: 28px; padding: 0 5px; border-radius: 6px;
+    border: 1px solid #3a3834; background: #1c1b19; color: #c4bfb6;
+    font-size: 10px; font-weight: 700; cursor: pointer; line-height: 1;
   }
-  .rail .quiet-btn, .sec button { font-weight: var(--ui-font-w, 700); }
+  .field-type button.on { border-color: #c9a227; color: #c9a227; }
 </style>
 </head>
 <body>
@@ -351,12 +365,6 @@
         <button type="button" data-ui="3">UI 3</button>
         <button type="button" data-ui="4">UI 4</button>
         <button type="button" data-ui="5">My UI</button>
-      </div>
-      <div class="proto-type" title="Prototype only — not for product">
-        <span class="proto-lab">Type</span>
-        <button type="button" id="protoFontDown" title="Smaller">A−</button>
-        <button type="button" id="protoFontUp" title="Larger">A+</button>
-        <button type="button" id="protoBold" title="Bold on/off">Bold</button>
       </div>
     </div>
     <div class="zoom-bar">
@@ -1608,26 +1616,69 @@ function saveBanquetStandard(){
   brief.style = 'banquet-std:'+id;
   refreshStyleSelects();
 
-/* Prototype type controls — menus only, not product */
-(function protoTypeControls(){
-  const KEY='plan2d-proto-type-v1';
-  let st={ px:14, bold:true };
-  try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY)||'{}')); } catch {}
-  function apply(){
-    document.documentElement.style.setProperty('--ui-font-px', st.px+'px');
-    document.documentElement.style.setProperty('--ui-font-w', st.bold ? '700' : '500');
-    const b=document.getElementById('protoBold');
-    if (b) b.classList.toggle('on', !!st.bold);
-    localStorage.setItem(KEY, JSON.stringify(st));
+/* Prototype: per left-rail field type (size + bold) — not product */
+(function fieldTypeControls(){
+  const KEY='plan2d-field-type-v1';
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch { return {}; } }
+  function save(map){ localStorage.setItem(KEY, JSON.stringify(map)); }
+  function keyFor(field){
+    const pane = field.closest('.rail-pane');
+    const pid = pane && pane.dataset.pane ? pane.dataset.pane : 'x';
+    return pid + ':' + (field.dataset.field||'unk');
   }
-  const down=document.getElementById('protoFontDown');
-  const up=document.getElementById('protoFontUp');
-  const bold=document.getElementById('protoBold');
-  if (down) down.onclick=()=>{ st.px=Math.max(11, st.px-1); apply(); };
-  if (up) up.onclick=()=>{ st.px=Math.min(22, st.px+1); apply(); };
-  if (bold) bold.onclick=()=>{ st.bold=!st.bold; apply(); };
-  apply();
+  function applyTo(field, st){
+    const px = st.px || 13;
+    const w = st.bold ? '700' : '500';
+    field.style.fontSize = px + 'px';
+    field.style.fontWeight = w;
+    field.querySelectorAll('label, .q, .tiny-lab, .fixed, input, select, .n').forEach(el=>{
+      el.style.fontSize = 'inherit';
+      el.style.fontWeight = 'inherit';
+    });
+    const boldBtn = field.querySelector('.field-type [data-act="bold"]');
+    if (boldBtn) boldBtn.classList.toggle('on', !!st.bold);
+  }
+  function ensureChip(field){
+    if (!field.dataset.field) return;
+    if (field.querySelector(':scope > .field-type')) return;
+    const chip = document.createElement('div');
+    chip.className = 'field-type';
+    chip.title = 'Prototype type — not for product';
+    chip.innerHTML = '<button type="button" data-act="down" title="Smaller">A−</button>'
+      + '<button type="button" data-act="up" title="Larger">A+</button>'
+      + '<button type="button" data-act="bold" title="Bold">B</button>';
+    chip.addEventListener('mousedown', e=>e.stopPropagation());
+    chip.addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation();
+      const act = e.target && e.target.dataset && e.target.dataset.act;
+      if (!act) return;
+      const map = load();
+      const k = keyFor(field);
+      const st = Object.assign({ px:13, bold:true }, map[k]||{});
+      if (act==='down') st.px = Math.max(11, (st.px||13)-1);
+      if (act==='up') st.px = Math.min(22, (st.px||13)+1);
+      if (act==='bold') st.bold = !st.bold;
+      map[k]=st; save(map); applyTo(field, st);
+    });
+    field.appendChild(chip);
+    const map = load();
+    applyTo(field, Object.assign({ px:13, bold:true }, map[keyFor(field)]||{}));
+  }
+  function wireAll(){
+    document.querySelectorAll('.rail-field[data-field]').forEach(ensureChip);
+  }
+  wireAll();
+  window.__wireFieldTypeControls = wireAll;
+  // After My UI rebuild
+  const _rb = window.__rebuildMyUi;
+  if (typeof _rb === 'function'){
+    window.__rebuildMyUi = function(){ _rb(); wireAll(); };
+  }
 })();
+
+
+
+
 
 
   applyBriefToDom();
