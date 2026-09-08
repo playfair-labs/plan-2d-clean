@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220">
+  <rect width="640" height="220" fill="#111111"/>
+  <text x="40" y="128" fill="#f4efe6" font-family="Georgia, Times New Roman, serif" font-size="118" font-weight="700" letter-spacing="-4">QT</text>
+  <text x="250" y="88" fill="#f4efe6" font-family="Helvetica Neue, Arial, sans-serif" font-size="36" font-weight="600" letter-spacing="4">PARRAMATTA</text>
+  <text x="250" y="138" fill="#c9a227" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="500" letter-spacing="3.2">SYDNEY</text>
+</svg>

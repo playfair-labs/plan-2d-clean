@@ -2732,19 +2732,8 @@ function applyStyleMax(styleVal){
   if (!window.Plan2dLayouts){ setStatus('Layouts missing'); return; }
   const packed = Plan2dLayouts.packStyle(s, layoutCtx());
   if (!packed){ setStatus('No packer for '+s); return; }
-  const spec = catalogRoom(currentRoomId);
-  const sid = s.replace(/-max$/,'');
-  const cap = spec && spec.caps ? spec.caps[sid] : null;
-  if (cap && packed.chairs && packed.chairs.length > cap){
-    packed.chairs = packed.chairs.slice(0, cap);
-    packed.guests = packed.chairs.length;
-  }
-  if (cap && packed.tables && packed.tables.length && sid==='cabaret' && packed.tables.length * 8 > cap){
-    packed.tables = packed.tables.slice(0, Math.floor(cap/8));
-    packed.guests = packed.tables.length * 8;
-  }
   applyLayoutItems(packed, { stripStage: s.indexOf('classroom')===0 || s.indexOf('theatre')===0 });
-  setStatus((packed.style||s)+' · Standard max · '+packed.guests+' pax'+(cap?' · cap '+cap:''));
+  setStatus((packed.style||s)+' · Standard max · '+packed.guests+' pax');
 }
 
 function applyBanquetBigStuff(styleVal){
