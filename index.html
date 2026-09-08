@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
-<meta name="plan2d-build" content="2026-09-08-t640c" />
+<meta name="plan2d-build" content="t641" />
 <style>
   :root {
     --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
@@ -206,11 +206,18 @@
     font-size: 11px !important; font-weight: 800 !important; cursor: pointer !important;
   }
   .field-type button.on { border-color: #c9a227 !important; color: #c9a227 !important; }
+
+  .build-big {
+    margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+    border: 1px dashed #5a5650; background: #1a1917;
+    font-size: 36px; font-weight: 800; letter-spacing: 0.04em;
+    color: var(--accent); text-align: center; line-height: 1.2;
+  }
+  .build-big small { display:block; font-size:11px; font-weight:650; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
 </style>
 </head>
 <body>
-<div class="top"><span id="buildStamp" style="font-size:11px;color:#8a8680;margin-left:8px">build t640c</span>
-  <strong>GRAND · PLAN 2D</strong>
+<div class="top"><strong>GRAND · PLAN 2D</strong>
 </div>
 <div class="shell">
   <aside class="rail" aria-label="Essentials">
@@ -368,6 +375,7 @@
     </div>
 
     <div class="rail-mapdock" aria-label="Map tools">
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t641</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
