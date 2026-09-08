@@ -1523,7 +1523,87 @@ function parseBanquetStyle(val){
   if (!m) return null;
   return { stages: m[1] ? Number(m[1]) : 0, dance: !!m[2] };
 }
+const STD_KEY = 'plan2d-banquet-standards-v1';
+function loadStandards(){ try { return JSON.parse(localStorage.getItem(STD_KEY)||'[]'); } catch { return []; } }
+function saveStandards(list){ localStorage.setItem(STD_KEY, JSON.stringify(list)); }
+
+/** Snapshot for a Banquet standard: stage/dance/AV + tables + guests + screen keep */
+function snapshotStandardItems(){
+  return items.map(i=>({
+    id:i.id, kind:i.kind, type:i.type, x:i.x, z:i.z, w:i.w, d:i.d,
+    label:i.label||'', locked:!!i.locked, group:i.group||null
+  }));
+}
+function applyStandardSnapshot(std){
+  items = (std.items||[]).map(i=>({...i}));
+  stageSeq = items.filter(i=>i.type==='stage').length;
+  seq = Math.max(seq, items.filter(i=>i.kind==='move'&&i.type==='round').length);
+  if (typeof std.screenKeepOn === 'boolean') screenKeepOn = std.screenKeepOn;
+  document.querySelectorAll('.screenKeepBtn').forEach(x=>{
+    x.textContent = screenKeepOn ? 'Screen keep · on' : 'Screen keep · off';
+    x.setAttribute('aria-pressed', screenKeepOn ? 'true' : 'false');
+  });
+  if (std.people) brief.people = String(std.people);
+  if (typeof recomputeStageGroups === 'function') recomputeStageGroups();
+  renumberTables();
+  applyBriefToDom();
+  render();
+  setStatus('Banquet · '+std.name);
+}
+
+function refreshStyleSelects(){
+  const standards = loadStandards();
+  document.querySelectorAll('select.sync-style').forEach(sel=>{
+    const cur = sel.value || brief.style;
+    // Remove prior dynamic standard options
+    [...sel.querySelectorAll('option[data-std]')].forEach(o=>o.remove());
+    // Insert after last built-in banquet-* option (before cabaret)
+    let cab = [...sel.options].find(o=>o.value==='cabaret');
+    standards.forEach(std=>{
+      const o=document.createElement('option');
+      o.value = 'banquet-std:'+std.id;
+      o.textContent = 'Banquet · '+std.name;
+      o.dataset.std = '1';
+      if (cab) sel.insertBefore(o, cab);
+      else sel.appendChild(o);
+    });
+    // restore selection if still valid
+    if ([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+    else if ([...sel.options].some(o=>o.value===brief.style)) sel.value = brief.style;
+  });
+}
+
+function saveBanquetStandard(){
+  const def = 'Standard configuration';
+  const name = (window.prompt('Name this Banquet standard', def)||'').trim();
+  if (!name){ setStatus('Standard not saved'); return; }
+  const list = loadStandards();
+  const id = 's'+Date.now().toString(36);
+  const entry = {
+    id, name,
+    people: brief.people || '',
+    screenKeepOn: !!screenKeepOn,
+    items: snapshotStandardItems()
+  };
+  // Replace same name
+  const next = list.filter(x=>x.name.toLowerCase()!==name.toLowerCase());
+  next.push(entry);
+  saveStandards(next);
+  brief.style = 'banquet-std:'+id;
+  refreshStyleSelects();
+  applyBriefToDom();
+  setStatus('Saved Banquet · '+name+' — now in Style dropdown');
+}
+
 function applyBanquetBigStuff(styleVal){
+  // Saved Banquet standard template
+  if (String(styleVal||'').startsWith('banquet-std:')){
+    const id = String(styleVal).slice('banquet-std:'.length);
+    const std = loadStandards().find(x=>x.id===id);
+    if (!std){ setStatus('Standard missing'); return; }
+    applyStandardSnapshot(std);
+    return;
+  }
   const spec = parseBanquetStyle(styleVal);
   if (!spec){
     // cabaret/classroom/theatre — leave map; just record style
@@ -1541,7 +1621,6 @@ function applyBanquetBigStuff(styleVal){
     }
   }
   if (spec.dance){
-    // Dance in open floor below stage/screens
     items.push({
       id:'dance1', kind:'permanent', type:'dance',
       x:0, z:-2.2, w:DANCE_FLOOR.w, d:DANCE_FLOOR.d,
@@ -1601,6 +1680,7 @@ window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o|
 fillKitHosts();
 wireSharedActions();
 bindBrief();
+refreshStyleSelects();
 
 (function mapAddContextMenu(){
   let menu=null;
@@ -1654,6 +1734,28 @@ bindBrief();
         };
         menu.appendChild(b);
       });
+    });
+    const tLab=document.createElement('div');
+    tLab.className='sec-lab';
+    tLab.textContent='Templates';
+    menu.appendChild(tLab);
+    const saveBtn=document.createElement('button');
+    saveBtn.type='button';
+    saveBtn.textContent='Make this a Banquet standard…';
+    saveBtn.onclick=()=>{ hide(); saveBanquetStandard(); };
+    menu.appendChild(saveBtn);
+    loadStandards().forEach(std=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent='Load · '+std.name;
+      b.onclick=()=>{
+        hide();
+        brief.style='banquet-std:'+std.id;
+        refreshStyleSelects();
+        applyBriefToDom();
+        applyBanquetBigStuff(brief.style);
+      };
+      menu.appendChild(b);
     });
     document.body.appendChild(menu);
   });
