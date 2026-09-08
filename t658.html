@@ -2022,7 +2022,7 @@ function settle(){
   if (it.kind==='permanent'){
     yieldForPermanents(groupMembers(it));
     if (liveMax){ pruneIllegalTables(); fillGapsHexOnce(); renumberTables(); setGuestsFromTables(); setStatus('Live max · settled'); }
-    else if (it.type!=='stage' && it.type!=='dance') setStatus('Settled');
+    else if (it.type!=='stage' && it.type!=='dance' && it.type!=='avops') setStatus('Settled');
   } else if (it.kind==='move' && it.type==='round'){
     renumberTables(); // keep # geography after shove
     invalidateFloorMax();
