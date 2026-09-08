@@ -1371,6 +1371,16 @@ function kitLabel(it){
   return it.label||'';
 }
 function isAvopsType(t){ return t==='avops'; }
+/** Flip L/R/none on the group. Does not move desks or touch pack maths. */
+function setAvopsDrape(it, side){
+  const live=items.find(x=>x.id===it.id)||it;
+  const mates=groupMembers(live).filter(m=>m.type==='avops');
+  const list=mates.length?mates:[live];
+  list.forEach(m=>{ m.drape=null; });
+  if (side==='left' || side==='right') list[0].drape=side;
+  render();
+  setStatus(side ? ('AV OPS Desk · drape '+side+' edge') : 'AV OPS Desk · no drape');
+}
 function avopsDrapeSide(members){
   for (const m of members){
     if (m.drape==='left' || m.drape==='right') return m.drape;
@@ -1450,7 +1460,7 @@ function placeMarkHtml(it, x, y){
   } else if (it.type==='trestle'){
     html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
     const lab=kitLabel(it);
-    if (lab) html+=`<text x="${x}" y="${y+3}" text-anchor="middle" font-size="8" font-weight="650" fill="#3a3328" ${pe}>${lab}</text>`;
+    if (lab) html+=`<text x="${x}" y="${y-d/2-5}" text-anchor="middle" font-size="8" font-weight="650" fill="#3a3328" ${pe}>${lab}</text>`;
   } else if (it.type==='avops'){
     html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
     html+=`<text x="${x}" y="${y-d/2-5}" text-anchor="middle" font-size="9" font-weight="700" fill="#1a1612" ${pe}>AV OPS Desk</text>`;
@@ -1800,25 +1810,42 @@ function hideItemCtxMenu(){
 }
 function showItemContextMenu(clientX, clientY, it, seat){
   hideItemCtxMenu();
-  // Right-click Delete removed (t657). Lectern lock/unlock only.
-  if (!it || it.type!=='lectern' || seat!=null) return;
+  // Right-click Delete removed (t657). Lectern lock / AV OPS drape only.
+  if (!it || seat!=null) return;
+  if (it.type!=='lectern' && it.type!=='avops') return;
   const menu = document.createElement('div');
   menu.className = 'ctx-menu';
   menu.style.left = clientX+'px';
   menu.style.top = clientY+'px';
   const lab = document.createElement('div');
   lab.className = 'sec-lab';
-  lab.textContent = 'Lectern';
-  menu.appendChild(lab);
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
-  b.onclick = ()=>{
-    hideItemCtxMenu();
-    if (it.locked) unlockLectern(it);
-    else lockLectern(it);
-  };
-  menu.appendChild(b);
+  if (it.type==='lectern'){
+    lab.textContent = 'Lectern';
+    menu.appendChild(lab);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
+    b.onclick = ()=>{
+      hideItemCtxMenu();
+      if (it.locked) unlockLectern(it);
+      else lockLectern(it);
+    };
+    menu.appendChild(b);
+  } else {
+    lab.textContent = 'AV OPS Desk — drape';
+    menu.appendChild(lab);
+    [
+      { side:null, label:'No drape' },
+      { side:'left', label:'Left edge' },
+      { side:'right', label:'Right edge' },
+    ].forEach(k=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent=k.label;
+      b.onclick=()=>{ hideItemCtxMenu(); setAvopsDrape(it, k.side); };
+      menu.appendChild(b);
+    });
+  }
   document.body.appendChild(menu);
   itemCtxMenu = menu;
 }
@@ -1830,7 +1857,8 @@ function onItemContextMenu(evt){
   if (!it) return;
   const seatRaw = evt.currentTarget.dataset.seat;
   const seat = seatRaw!=null && seatRaw!=='' ? Number(seatRaw) : null;
-  if (it.type!=='lectern' || Number.isFinite(seat)) return;
+  if (Number.isFinite(seat)) return;
+  if (it.type!=='lectern' && it.type!=='avops') return;
   selectedId = it.id;
   selectedSeat = null;
   render();
@@ -2713,7 +2741,7 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel,setAvopsDrape};
 fillKitHosts();
 wireSharedActions();
 bindBrief();
@@ -2726,7 +2754,8 @@ function placeMenuIcon(kind){
   if (kind==='speaker') return svg('<rect x="4" y="4" width="10" height="10" fill="#2c2a26" stroke="#1a1612"/><circle cx="9" cy="9" r="2.4" fill="none" stroke="#f6f1e8"/>');
   if (kind==='foldback') return svg('<path d="M6 4h6l3 10H3z" fill="#2c2a26" stroke="#1a1612"/><path d="M7 8h4" stroke="#f6f1e8"/>');
   if (kind==='coffeecart') return svg('<rect x="2" y="5" width="14" height="8" rx="1.5" fill="#d8cfc2" stroke="#5c564c"/><circle cx="7" cy="9" r="2" fill="#6a4a32"/><circle cx="11.5" cy="9" r="1.5" fill="#6a4a32"/>');
-  if (kind==='trestle' || kind==='trestle-water' || kind==='trestle-reg' || kind==='trestle-expo' || kind==='avops')
+  if (kind==='avops') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 14 q 2-2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
+  if (kind==='trestle' || kind==='trestle-water' || kind==='trestle-reg' || kind==='trestle-expo')
     return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/>');
   if (kind==='tub') return svg('<path d="M5 5v5q0 3 4 3t4-3V5q0 2-4 2.4T5 5z" fill="#5c564c" stroke="#333"/>');
   if (kind==='stool') return svg('<circle cx="9" cy="9" r="5" fill="#8e8880" stroke="#333"/><circle cx="9" cy="9" r="2" fill="none" stroke="#3a3328"/>');

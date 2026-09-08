@@ -11,7 +11,10 @@ assert.ok(/const TUB_CHAIR = \{ w:0\.75, d:0\.7 \}/.test(html), 'tub chair size'
 assert.ok(/const STOOL = \{ w:0\.4, d:0\.4 \}/.test(html), 'stool size');
 assert.ok(/const SMALL_TABLE = \{ w:0\.6, d:0\.6 \}/.test(html), 'small table size');
 assert.ok(/const DRAPE_OFF = 0\.07/.test(html), 'drape offset just outside long edge');
+assert.ok(/function setAvopsDrape\(/.test(html), 'flip drape after place (no pack maths)');
 assert.ok(/function avopsDrapeRun\(/.test(html), 'avopsDrapeRun helper');
+assert.ok(/it\.type!=='lectern' && it\.type!=='avops'/.test(html), 'item ctx is lectern lock or AV OPS drape');
+assert.ok(/AV OPS Desk — drape/.test(html), 'item ctx drape chooser');
 assert.ok(/function drapeSquigglePath\(/.test(html), 'Parramatta USITT squiggle');
 assert.ok(/function snapAvopsDesk\(/.test(html), 'AV OPS snap');
 assert.ok(/function recomputeAvopsGroups\(/.test(html), 'AV OPS groups');
@@ -103,5 +106,47 @@ assert.strictEqual(avopsDrapeSide(bothDraped), 'left', 'first drape wins — no 
 const right = { ...one, drape:'right' };
 const runR = avopsDrapeRun([right]);
 assert.strictEqual(runR.z0, TRESTLE.d/2 + DRAPE_OFF, 'right edge is the +Z long face');
+
+function setAvopsDrape(list, side){
+  list.forEach(m=>{ m.drape=null; });
+  if (side==='left' || side==='right') list[0].drape=side;
+}
+const flip=[
+  { id:'a1', type:'avops', x:0, z:0, w:TRESTLE.w, d:TRESTLE.d, drape:'left' },
+  { id:'a2', type:'avops', x:TRESTLE.w, z:0, w:TRESTLE.w, d:TRESTLE.d, drape:null },
+];
+setAvopsDrape(flip, 'right');
+assert.strictEqual(flip[0].drape, 'right');
+assert.strictEqual(flip[1].drape, null);
+const runFlip=avopsDrapeRun(flip);
+assert.ok(Math.abs((runFlip.x1-runFlip.x0)-TRESTLE.w*2)<1e-9, 'flip keeps one lengthened squiggle');
+assert.strictEqual(runFlip.z0, TRESTLE.d/2 + DRAPE_OFF, 'flip moves the one run to the other long edge');
+setAvopsDrape(flip, null);
+assert.strictEqual(avopsDrapeRun(flip), null, 'no drape clears the squiggle');
+
+const t657 = fs.readFileSync(__dirname + '/t657.html', 'utf8');
+function sliceFn(src, name){
+  const start = src.indexOf('function '+name+'(');
+  assert.ok(start>=0, name+' present');
+  let i=src.indexOf('{', start), depth=0;
+  for (;i<src.length;i++){
+    if (src[i]==='{') depth++;
+    else if (src[i]==='}'){ depth--; if (!depth) return src.slice(start, i+1); }
+  }
+  return '';
+}
+['packHexSync','packSolidsFromItems'].forEach(fn=>{
+  assert.strictEqual(sliceFn(html, fn), sliceFn(t657, fn), fn+' banquet pack maths unchanged');
+});
+assert.strictEqual(
+  html.match(/const BEST_SEED = \[[\s\S]*?\];/)[0],
+  t657.match(/const BEST_SEED = \[[\s\S]*?\];/)[0],
+  'BEST_SEED unchanged'
+);
+assert.strictEqual(
+  html.match(/const MIN_C2C = [^;]+;/)[0],
+  t657.match(/const MIN_C2C = [^;]+;/)[0],
+  'MIN_C2C unchanged'
+);
 
 console.log('placeable.test.js ok');
