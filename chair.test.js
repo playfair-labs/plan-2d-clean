@@ -1,5 +1,6 @@
 'use strict';
-/** Per-chair delete: hide seat, people-1, parent table stays; pack ring stays BODY_D. */
+/** Per-chair delete: hide seat, people-1, parent table stays; pack ring stays BODY_D.
+ *  t657: nested select + left Delete only (no right-click Delete). */
 const assert = require('assert');
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
@@ -7,7 +8,13 @@ const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 assert.ok(/data-seat="\$\{i\}"/.test(html), 'chairs are hittable');
 assert.ok(/function deleteSeat\(/.test(html), 'deleteSeat helper');
 assert.ok(/have === need && roomSeats\(\) === p/.test(html), 'syncTablesToPeople skips rebuild when seats match');
-assert.ok(/if \(seat!=null\) deleteSeat\(it, seat\)/.test(html), 'context Delete on chair calls deleteSeat');
+assert.ok(/let selectedSeat = null/.test(html), 'nested chair select state');
+assert.ok(/if \(selectedId===id\) selectedSeat=clickedSeat/.test(html), 'second click on chair nests select');
+assert.ok(/if \(it && it\.type==='round' && selectedSeat!=null\)/.test(html), 'left Delete reads nested chair');
+assert.ok(/deleteSeat\(it, selectedSeat\)/.test(html), 'left Delete on chair calls deleteSeat');
+assert.ok(/id="deleteBtn" class="delete-big"/.test(html), 'big left Delete button');
+assert.ok(!/del\.textContent = 'Delete'/.test(html), 'no context-menu Delete');
+assert.ok(!/if \(e\.key!=='Backspace' && e\.key!=='Delete'\)/.test(html), 'keyboard Delete removed');
 assert.ok(/removedSeats/.test(html), 'removedSeats persisted');
 
 const SEATS_PER_TABLE = 10;
