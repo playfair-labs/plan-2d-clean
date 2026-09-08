@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
+<meta name="plan2d-build" content="2026-09-08-t640c" />
 <style>
   :root {
     --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
@@ -208,7 +209,7 @@
 </style>
 </head>
 <body>
-<div class="top">
+<div class="top"><span id="buildStamp" style="font-size:11px;color:#8a8680;margin-left:8px">build t640c</span>
   <strong>GRAND · PLAN 2D</strong>
 </div>
 <div class="shell">
@@ -1665,6 +1666,9 @@ function saveBanquetStandard(){
   saveStandards(next);
   brief.style = 'banquet-std:'+id;
   refreshStyleSelects();
+  applyBriefToDom();
+  setStatus('Saved Banquet · '+name+' — now in Style dropdown');
+}
 
 /* Prototype: per left-rail field type (size + bold) — not product */
 (function fieldTypeControls(){
@@ -1754,15 +1758,6 @@ function saveBanquetStandard(){
     window.__rebuildMyUi = function(){ _rb(); wireAll(); };
   }
 })();
-
-
-
-
-
-
-  applyBriefToDom();
-  setStatus('Saved Banquet · '+name+' — now in Style dropdown');
-}
 
 function applyBanquetBigStuff(styleVal){
   // Saved Banquet standard template
