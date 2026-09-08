@@ -1725,6 +1725,29 @@ function liveMaxPulse(perms){
   yieldForPermanents(perms);
   pruneIllegalTables();
 }
+function groupPoseLegal(members, opts){
+  for (const m of members){ if (!isLegal(m, opts)) return false; }
+  return true;
+}
+function applyGroupDelta(members, origins, dx, dz){
+  for (const m of members){
+    const o=origins.find(x=>x.id===m.id);
+    if (o){ m.x=o.x+dx; m.z=o.z+dz; }
+  }
+}
+/** Slide a composite as far as the pointer allows without going illegal (no rubber-band). */
+function slideGroupToward(members, origins, dx, dz, opts){
+  applyGroupDelta(members, origins, dx, dz);
+  if (groupPoseLegal(members, opts)) return true;
+  let lo=0, hi=1;
+  for (let i=0;i<10;i++){
+    const mid=(lo+hi)/2;
+    applyGroupDelta(members, origins, dx*mid, dz*mid);
+    if (groupPoseLegal(members, opts)) lo=mid; else hi=mid;
+  }
+  applyGroupDelta(members, origins, dx*lo, dz*lo);
+  return lo > 1e-4;
+}
 function onMove(evt){
   if (!drag) return;
   drag._cx=evt.clientX; drag._cy=evt.clientY;
@@ -1733,14 +1756,13 @@ function onMove(evt){
   if (isLocked(lead)){ setStatus('Locked · unlock to move'); return; }
   const p=fromSvg(svgPoint(evt).x, svgPoint(evt).y);
   const nx=p.x-drag.ox, nz=p.z-drag.oz;
-  const dx=nx-lead.x, dz=nz-lead.z;
   const members=groupMembers(lead);
   if (members.some(isLocked)){ setStatus('Locked · unlock to move'); return; }
-  for (const m of members){ m.x+=dx; m.z+=dz; }
+  const originLead=drag.origins.find(x=>x.id===lead.id) || drag.origins[0];
+  const dx=nx-originLead.x, dz=nz-originLead.z;
   const opts = lead.kind==='permanent' ? {ignoreMove:true} : {};
-  let allOk=true;
-  for (const m of members){ if (!isLegal(m, opts)){ allOk=false; break; } }
-  if (allOk) drag.lastLegal = members.map(m=>({id:m.id,x:m.x,z:m.z}));
+  slideGroupToward(members, drag.origins, dx, dz, opts);
+  if (groupPoseLegal(members, opts)) drag.lastLegal = members.map(m=>({id:m.id,x:m.x,z:m.z}));
   if (lead.kind==='permanent') liveMaxPulse(members);
   render();
 }
