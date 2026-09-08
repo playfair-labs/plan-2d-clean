@@ -150,7 +150,6 @@ function buildWorld(opts) {
     if (!it) return;
     if (it.type === 'round' && it.locked) {
       locked.push({ x: it.x, z: it.z });
-      solids.push({ x: it.x - BODY_R, z: it.z - BODY_R, w: BODY_D, d: BODY_D, kind: 'locked-round' });
       return;
     }
     if (it.type === 'round') return;
@@ -234,6 +233,16 @@ function bboxOfPoints(pts) {
   return { minX, maxX, minZ, maxZ, w: maxX - minX, h: maxZ - minZ };
 }
 
+/**
+ * Adjacent-x pitch on a strip of height H < D.
+ * Alternating sides: need sqrt(s²+H²) ≥ D and 2s ≥ D (same-side pair).
+ */
+function stripPitch(H, D) {
+  if (H < 1e-12) return D;
+  if (H >= D - 1e-12) return null;
+  return Math.max(Math.sqrt(D * D - H * H), D / 2);
+}
+
 // --- Exact 1-D: points on a strip of height H < D, width W ---
 function exactStripCount(W, H, D) {
   if (W < -1e-12 || H < -1e-12) return 0;
@@ -244,11 +253,11 @@ function exactStripCount(W, H, D) {
   if (H < 1e-12) return 1 + Math.floor(W / D + 1e-12);
   if (W < 1e-12) return 1 + Math.floor(H / D + 1e-12);
   if (H < D - 1e-12) {
-    const sep = Math.sqrt(D * D - H * H);
+    const sep = stripPitch(H, D);
     return 1 + Math.floor(W / sep + 1e-12);
   }
   if (W < D - 1e-12) {
-    const sep = Math.sqrt(D * D - W * W);
+    const sep = stripPitch(W, D);
     return 1 + Math.floor(H / sep + 1e-12);
   }
   return null; // 2-D, not a strip
@@ -258,15 +267,17 @@ function placeStrip(W, H, D) {
   const n = exactStripCount(W, H, D);
   if (n == null || n <= 0) return [];
   if (n === 1) return [{ x: W / 2, z: H / 2 }];
+  const out = [];
   if (H < D - 1e-12) {
-    const sep = H < 1e-12 ? D : Math.sqrt(D * D - H * H);
-    const out = [];
-    for (let i = 0; i < n; i++) out.push({ x: i * sep, z: (i % 2 && H > 0) ? H : 0 });
+    // Even spacing (not i*sep) so FP does not land just under MIN_C2C.
+    const span = n === 1 ? 0 : W;
+    const dx = span / (n - 1);
+    for (let i = 0; i < n; i++) out.push({ x: i * dx, z: (i % 2 && H > 0) ? H : 0 });
     return out;
   }
-  const sep = W < 1e-12 ? D : Math.sqrt(D * D - W * W);
-  const out = [];
-  for (let i = 0; i < n; i++) out.push({ x: (i % 2 && W > 0) ? W : 0, z: i * sep });
+  const span = n === 1 ? 0 : H;
+  const dz = span / (n - 1);
+  for (let i = 0; i < n; i++) out.push({ x: (i % 2 && W > 0) ? W : 0, z: i * dz });
   return out;
 }
 
@@ -568,35 +579,137 @@ function cellCoverUpper(world, cellSide) {
   return world.locked.length + Object.keys(cells).length;
 }
 
+function placeInBox(box, local) {
+  const pad = 1e-4;
+  const W = Math.max(0, box.maxX - box.minX);
+  const H = Math.max(0, box.maxZ - box.minZ);
+  const out = [];
+  for (let i = 0; i < local.length; i++) {
+    let x = box.minX + local[i].x;
+    let z = box.minZ + local[i].z;
+    if (local[i].x <= 1e-9) x = box.minX + pad;
+    if (local[i].z <= 1e-9) z = box.minZ + pad;
+    if (local[i].x >= W - 1e-9) x = box.maxX - pad;
+    if (local[i].z >= H - 1e-9) z = box.maxZ - pad;
+    out.push({ x, z });
+  }
+  return out;
+}
+
 /**
  * If feasible centres fit in a strip of height or width < MIN_C2C, the 1-D
  * formula is the exact maximum (alternating sides).
+ * Empty rectangle: use the usable box (no raster shrink).
+ * With solids: only then raster, and only if the usable box is already a strip
+ * (Grand's 2-D usable box skips this path — no 25k-point scan).
  */
 function stripExact(world) {
-  const pts = rasterFeasible(world, 0.08);
-  if (!pts.length) return { n: world.locked.length, packing: [], exact: true };
-  const bb = bboxOfPoints(pts);
-  const D = MIN_C2C;
   const locked = world.locked || [];
-  // Locked tables already occupy space; 1-D exact only when no locked
-  // (locked at arbitrary pose breaks the strip formula).
   if (locked.length) return null;
-  const strip = exactStripCount(bb.w, bb.h, D);
-  if (strip == null) return null;
-  // Raster may shrink the true F slightly (underestimate W/H) → strip count
-  // could be LOW. Expand by one step to overestimate for the upper side.
-  const W = bb.w + 0.08, H = bb.h + 0.08;
-  const up = exactStripCount(W, H, D);
-  const lo = strip;
-  if (up == null) return null;
+  const box = usableBox(world);
+  const W0 = box.maxX - box.minX, H0 = box.maxZ - box.minZ;
+  if (W0 < -1e-12 || H0 < -1e-12) {
+    return { n: 0, packing: [], exact: true, upper: 0, lower: 0 };
+  }
+  const D = MIN_C2C;
+  const usableStrip = exactStripCount(Math.max(0, W0), Math.max(0, H0), D);
+  if (usableStrip == null) return null;
+
+  if (!world.solids.length) {
+    const pad = 2e-4;
+    const Wi = Math.max(0, W0 - 2 * pad);
+    const Hi = Math.max(0, H0 - 2 * pad);
+    const local = placeStrip(Wi, Hi, D);
+    const packing = [];
+    for (let i = 0; i < local.length; i++) {
+      let p = { x: box.minX + pad + local[i].x, z: box.minZ + pad + local[i].z };
+      if (!centreLegal(world, p.x, p.z, packing, -1)) {
+        p = { x: p.x + 2e-6, z: p.z };
+      }
+      if (centreLegal(world, p.x, p.z, packing, -1)) packing.push(p);
+    }
+    const exact = packing.length === usableStrip;
+    return { n: packing.length, packing, exact, upper: usableStrip, lower: packing.length };
+  }
+
+  // Full-height bars: remaining is a union of independent 1-D intervals.
+  const split = splitStripExact(world, box, D);
+  if (split) return split;
+
+  const pts = rasterFeasible(world, 0.08);
+  if (!pts.length) return { n: 0, packing: [], exact: true, upper: 0, lower: 0 };
+  const bb = bboxOfPoints(pts);
+  const lo = exactStripCount(bb.w, bb.h, D);
+  const up = exactStripCount(bb.w + 0.08, bb.h + 0.08, D);
+  if (lo == null || up == null) return null;
   const local = placeStrip(bb.w, bb.h, D);
   const packing = [];
-  for (let i = 0; i < local.length; i++) {
-    const x = bb.minX + local[i].x, z = bb.minZ + local[i].z;
-    if (centreLegal(world, x, z, packing.concat(locked), -1)) packing.push({ x, z });
+  const guessed = placeInBox(bb, local);
+  for (let i = 0; i < guessed.length; i++) {
+    const p = guessed[i];
+    if (centreLegal(world, p.x, p.z, packing, -1)) packing.push(p);
   }
-  // If we placed `lo` and up === lo, exact.
   return { n: packing.length, packing, exact: up === packing.length, upper: up, lower: packing.length };
+}
+
+/** Vertical exclusions that cover the usable z-range split a strip into independent 1-D rooms. */
+function splitStripExact(world, box, D) {
+  const H = box.maxZ - box.minZ;
+  if (stripPitch(H, D) == null) return null;
+  const solids = world.solids || [];
+  if (!solids.length) return null;
+  for (let i = 0; i < solids.length; i++) {
+    const b = solids[i];
+    if (b.z > box.minZ + 1e-9 || b.z + b.d < box.maxZ - 1e-9) {
+      // not a full-height cutter — still try if inflated z covers usable
+      const z0 = b.z - HIT_R, z1 = b.z + b.d + HIT_R;
+      if (z0 > box.minZ + 1e-6 || z1 < box.maxZ - 1e-6) return null;
+    }
+  }
+  const cuts = [];
+  for (let i = 0; i < solids.length; i++) {
+    const b = solids[i];
+    cuts.push({ a: b.x - HIT_R, b: b.x + b.w + HIT_R });
+  }
+  cuts.sort((p, q) => p.a - q.a);
+  const merged = [];
+  for (let i = 0; i < cuts.length; i++) {
+    if (!merged.length || cuts[i].a > merged[merged.length - 1].b) merged.push({ a: cuts[i].a, b: cuts[i].b });
+    else merged[merged.length - 1].b = Math.max(merged[merged.length - 1].b, cuts[i].b);
+  }
+  const gaps = [];
+  let cursor = box.minX;
+  for (let i = 0; i < merged.length; i++) {
+    if (merged[i].a > cursor) gaps.push({ a: cursor, b: Math.min(merged[i].a, box.maxX) });
+    cursor = Math.max(cursor, merged[i].b);
+  }
+  if (cursor < box.maxX) gaps.push({ a: cursor, b: box.maxX });
+
+  const packing = [];
+  let upper = 0;
+  for (let g = 0; g < gaps.length; g++) {
+    const Wg = Math.max(0, gaps[g].b - gaps[g].a);
+    const n = exactStripCount(Wg, H, D);
+    if (n == null) return null;
+    upper += n;
+    const sub = { minX: gaps[g].a, maxX: gaps[g].b, minZ: box.minZ, maxZ: box.maxZ };
+    const pad = 2e-4;
+    const Wi = Math.max(0, Wg - 2 * pad);
+    const Hi = Math.max(0, H - 2 * pad);
+    const local = placeStrip(Wi, Hi, D);
+    for (let i = 0; i < local.length; i++) {
+      let p = { x: sub.minX + pad + local[i].x, z: sub.minZ + pad + local[i].z };
+      if (!centreLegal(world, p.x, p.z, packing, -1)) p = { x: p.x + 2e-6, z: p.z };
+      if (centreLegal(world, p.x, p.z, packing, -1)) packing.push(p);
+    }
+  }
+  return {
+    n: packing.length,
+    packing,
+    exact: packing.length === upper,
+    upper,
+    lower: packing.length
+  };
 }
 
 function cannotPlaceOneMore(world, packing) {
@@ -801,15 +914,6 @@ function proveItems(opts) {
   return proveMax(buildWorld(opts || {}), opts);
 }
 
-const LIVE_FINGERPRINTS = {
-  packHexSync: 'function packHexSync(solids, locked, opts)',
-  runMaxPax: 'function runMaxPax()',
-  recomputeFloorMaxAlgo: 'function recomputeFloorMaxAlgo()',
-  syncTablesToPeople: 'function syncTablesToPeople()',
-  BEST_SEED: 'const BEST_SEED = [',
-  packSolidsFromItems: 'function packSolidsFromItems()'
-};
-
 const api = {
   MODE,
   ROOM, HOLES, HOLE_KEEP, DOORS, SCREENS,
@@ -824,8 +928,7 @@ const api = {
   packConstructive, proveMax, proveItems,
   parseBanquetStyle, banquetStyleItems, fixtureWorld,
   cannotPlaceOneMore, areaUpper, cellCoverUpper,
-  exactMIS, greedyIndep, conflictAdj,
-  LIVE_FINGERPRINTS
+  exactMIS, greedyIndep, conflictAdj, stripPitch
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = api;

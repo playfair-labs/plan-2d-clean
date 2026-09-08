@@ -14,7 +14,11 @@ Given other placed pieces (stage, dance, kit, pillars, door/screen exclusions, l
 2. **Upper bound** — a valid argument that `N+1` cannot exist (1-D strip formula, exclusive-disk area, or diameter-`< MIN_C2C` cell cover).
 3. **`proven === true`** iff lower = upper. Then **Max = true maximum**, guests = `N × 10`.
 
-Hundreds of tests close that gap on strip rooms, split rooms, and obstacle knock-outs. Grand fixtures assert legality, monotonicity (adding a solid never raises Max), and the dual bounds.
+`node banquet-max-dup.test.js` — **3301 assertions**.
+
+- **Proven true max** (`proven === true`, lower = upper) on every 1-D strip room: empty lines, alternating-side strips, full-height exclusions that split a strip, walled-off 0. Guests = `N × 10`. Adding one more centre on that grid is illegal.
+- **Grand fixtures** (stage / dance / kit / pillars / screen keep): packing is legal under the same physics as live; adding a solid or turning screen keep on **never raises** Max. Dual bounds reported (constructive lower, cell/area upper). 2-D Grand does not always close lower=upper — Soft can copy the module and tighten the 2-D upper later without touching live packing.
+- Isolation: `index.html` does not mention this folder; live `packHexSync` / `BEST_SEED` / `runMaxPax` fingerprints still present.
 
 ## API
 

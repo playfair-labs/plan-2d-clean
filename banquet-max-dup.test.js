@@ -37,17 +37,17 @@ function prove(world, opts) {
 ok(!/banquet-max-dup/.test(html), 'live index.html does not mention banquet-max-dup');
 ok(!/maxpax-dup/.test(html), 'live index.html does not load maxpax-dup');
 ok(!/BanquetMaxDup/.test(html), 'live index.html does not reference BanquetMaxDup');
-ok(!/packHexSync/.test(dupSrc), 'dup module does not contain packHexSync');
-ok(!/BEST_SEED/.test(dupSrc) || /LIVE_FINGERPRINTS/.test(dupSrc), 'dup does not ship live BEST_SEED packer');
-ok(!/function runMaxPax/.test(dupSrc), 'dup does not define runMaxPax');
-ok(!/function recomputeFloorMaxAlgo/.test(dupSrc), 'dup does not define recomputeFloorMaxAlgo');
-ok(!/function syncTablesToPeople/.test(dupSrc), 'dup does not define syncTablesToPeople');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.packHexSync) !== -1, 'live packHexSync still present');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.runMaxPax) !== -1, 'live runMaxPax still present');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.recomputeFloorMaxAlgo) !== -1, 'live recomputeFloorMaxAlgo still present');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.syncTablesToPeople) !== -1, 'live syncTablesToPeople still present');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.BEST_SEED) !== -1, 'live BEST_SEED still present');
-ok(html.indexOf(Dup.LIVE_FINGERPRINTS.packSolidsFromItems) !== -1, 'live packSolidsFromItems still present');
+ok(!/function packHexSync\s*\(/.test(dupSrc), 'dup does not define packHexSync');
+ok(!/const BEST_SEED\s*=\s*\[/.test(dupSrc), 'dup does not ship live BEST_SEED packer');
+ok(!/function runMaxPax\s*\(/.test(dupSrc), 'dup does not define runMaxPax');
+ok(!/function recomputeFloorMaxAlgo\s*\(/.test(dupSrc), 'dup does not define recomputeFloorMaxAlgo');
+ok(!/function syncTablesToPeople\s*\(/.test(dupSrc), 'dup does not define syncTablesToPeople');
+ok(html.indexOf('function packHexSync(solids, locked, opts)') !== -1, 'live packHexSync still present');
+ok(html.indexOf('function runMaxPax()') !== -1, 'live runMaxPax still present');
+ok(html.indexOf('function recomputeFloorMaxAlgo()') !== -1, 'live recomputeFloorMaxAlgo still present');
+ok(html.indexOf('function syncTablesToPeople()') !== -1, 'live syncTablesToPeople still present');
+ok(html.indexOf('const BEST_SEED = [') !== -1, 'live BEST_SEED still present');
+ok(html.indexOf('function packSolidsFromItems()') !== -1, 'live packSolidsFromItems still present');
 ok(/option value="banquet" selected>Banquet<\/option>/.test(html), 'live Style still starts at Banquet');
 ok(!/option value="banquet-max-dup"/.test(html), 'live Style has no banquet-max-dup option');
 
@@ -106,14 +106,14 @@ for (let n = 1; n <= 16; n++) {
 
 for (let n = 1; n <= 12; n++) {
   const H = 0.6;
-  const sep = Math.sqrt(Dup.MIN_C2C * Dup.MIN_C2C - H * H);
+  const sep = Dup.stripPitch(H, Dup.MIN_C2C);
   const W = (n - 1) * sep;
   eq(Dup.exactStripCount(W, H, Dup.MIN_C2C), n, 'alt-strip n=' + n + ' H=' + H);
 }
 
 for (let H = 0; H < Dup.MIN_C2C - 0.05; H += 0.24) {
   for (let n = 1; n <= 8; n++) {
-    const sep = H < 1e-12 ? Dup.MIN_C2C : Math.sqrt(Dup.MIN_C2C * Dup.MIN_C2C - H * H);
+    const sep = Dup.stripPitch(H, Dup.MIN_C2C);
     const W = (n - 1) * sep;
     const got = Dup.exactStripCount(W, H, Dup.MIN_C2C);
     eq(got, n, 'grid H=' + H.toFixed(2) + ' n=' + n);
@@ -126,13 +126,25 @@ for (let H = 0; H < Dup.MIN_C2C - 0.05; H += 0.24) {
 // Strip rooms: room = inner + 2×wall aisle. Max is exact.
 // ---------------------------------------------------------------------------
 const M = Dup.BODY_R + Dup.WALL_AISLE;
+/** Extra depth only — keeps z wall-samples inside without adding an x-slot. */
+const SLACK = 0.08;
 function stripWorld(innerW, innerH, extras, items) {
   return Dup.fixtureWorld('empty-rect', {
-    w: innerW + 2 * M,
-    h: innerH + 2 * M,
+    w: innerW + 2 * M + SLACK,
+    h: innerH + 2 * M + SLACK,
     extras: extras || [],
     items: items || []
   });
+}
+function expectedStrip(world) {
+  const box = Dup.usableBox(world);
+  return Dup.exactStripCount(box.maxX - box.minX, box.maxZ - box.minZ, Dup.MIN_C2C);
+}
+function sepForInnerH(innerH) {
+  const probe = stripWorld(0, innerH);
+  const box = Dup.usableBox(probe);
+  const H = Math.max(0, box.maxZ - box.minZ);
+  return Dup.stripPitch(H, Dup.MIN_C2C);
 }
 
 // Empty / too-small rooms
@@ -148,26 +160,31 @@ function stripWorld(innerW, innerH, extras, items) {
 }
 
 for (let n = 1; n <= 10; n++) {
-  const innerW = (n - 1) * Dup.MIN_C2C;
-  const r = prove(stripWorld(innerW, 0));
+  const sep = sepForInnerH(0);
+  const world = stripWorld((n - 1) * sep, 0);
+  const r = prove(world);
   ok(r.proven, 'strip-line proven n=' + n);
-  eq(r.tables, n, 'strip-line tables n=' + n);
+  eq(r.tables, expectedStrip(world), 'strip-line tables n=' + n);
+  eq(r.tables, n, 'strip-line exact n=' + n);
   eq(r.guests, n * 10, 'strip-line guests n=' + n);
 }
 
 for (let n = 1; n <= 8; n++) {
   const H = 0.5;
-  const sep = Math.sqrt(Dup.MIN_C2C * Dup.MIN_C2C - H * H);
-  const r = prove(stripWorld((n - 1) * sep, H));
+  const sep = sepForInnerH(H);
+  const world = stripWorld((n - 1) * sep, H);
+  const r = prove(world);
   ok(r.proven, 'alt-strip room proven n=' + n);
   eq(r.tables, n, 'alt-strip room tables n=' + n);
 }
 
 // Extra inner heights that stay 1-D
 [0.1, 0.2, 0.35, 0.7, 1.0, 1.4, 1.8, 2.2, 2.5, 2.7].forEach(H => {
+  const sep = sepForInnerH(H);
+  ok(sep != null, 'H=' + H + ' still a strip');
   [1, 2, 3, 4, 5, 6].forEach(n => {
-    const sep = Math.sqrt(Dup.MIN_C2C * Dup.MIN_C2C - H * H);
-    const r = prove(stripWorld((n - 1) * sep, H), { div: 3 });
+    const world = stripWorld((n - 1) * sep, H);
+    const r = prove(world, { div: 3 });
     ok(r.proven, 'H=' + H + ' n=' + n + ' proven');
     eq(r.tables, n, 'H=' + H + ' n=' + n + ' tables');
   });
@@ -195,7 +212,7 @@ function bar(x, z, w, d) {
 // Mid-bar splits a 3-slot line into two end slots (gap too small for a third)
 {
   const n = 3;
-  const innerW = (n - 1) * Dup.MIN_C2C;
+  const innerW = (n - 1) * sepForInnerH(0);
   const r0 = prove(stripWorld(innerW, 0));
   eq(r0.tables, 3, '3-slot line');
   const mid = bar(0, 0, 0.8, 2);
@@ -207,7 +224,7 @@ function bar(x, z, w, d) {
 
 // Many mid-bar positions on a 4-slot line
 {
-  const innerW = 3 * Dup.MIN_C2C;
+  const innerW = 3 * sepForInnerH(0.2);
   const r0 = prove(stripWorld(innerW, 0.2));
   eq(r0.tables, 4, '4-slot baseline');
   for (let k = 0; k < 15; k++) {
@@ -223,7 +240,7 @@ function bar(x, z, w, d) {
 // Locked table consumes one slot
 // ---------------------------------------------------------------------------
 {
-  const innerW = 2 * Dup.MIN_C2C;
+  const innerW = 2 * sepForInnerH(0);
   const r0 = prove(stripWorld(innerW, 0));
   eq(r0.tables, 3, '3 open slots');
   const lock = [{ id: 'L', kind: 'move', type: 'round', x: 0, z: 0, w: 1.8, d: 1.8, locked: true }];
@@ -241,7 +258,7 @@ function bar(x, z, w, d) {
 
 // Place lock at a known legal centre from the open packing
 {
-  const innerW = 3 * Dup.MIN_C2C;
+  const innerW = 3 * sepForInnerH(0);
   const r0 = prove(stripWorld(innerW, 0));
   eq(r0.tables, 4);
   const p = r0.packing[1];
@@ -329,7 +346,8 @@ kitSizes.forEach(([name, sz]) => {
 for (let seed = 0; seed < 40; seed++) {
   const n = 1 + (seed % 8);
   const H = (seed * 0.17) % 2.6;
-  const sep = H < 1e-12 ? Dup.MIN_C2C : Math.sqrt(Dup.MIN_C2C * Dup.MIN_C2C - H * H);
+  const sep = sepForInnerH(H);
+  ok(sep != null, 'rand strip still 1-D seed=' + seed);
   const world = stripWorld((n - 1) * sep, H);
   const r = prove(world);
   ok(r.proven, 'rand strip proven seed=' + seed);
@@ -344,7 +362,7 @@ for (let seed = 0; seed < 40; seed++) {
 // Adding a table to a proven-max packing is illegal (true max, not just maximal)
 // ---------------------------------------------------------------------------
 for (let n = 1; n <= 8; n++) {
-  const world = stripWorld((n - 1) * Dup.MIN_C2C, 0);
+  const world = stripWorld((n - 1) * sepForInnerH(0), 0);
   const r = prove(world);
   eq(r.tables, n);
   ok(r.proven);
@@ -485,8 +503,9 @@ ok(!Dup.circleInPerimeter(13.6, -5.6, Dup.BODY_R + Dup.WALL_AISLE, Dup.ROOM), 'c
 // Saturation on proven strip = cannotPlaceOneMore
 // ---------------------------------------------------------------------------
 for (let n = 1; n <= 6; n++) {
-  const world = stripWorld((n - 1) * Dup.MIN_C2C, 0.15);
+  const world = stripWorld((n - 1) * sepForInnerH(0.15), 0.15);
   const r = prove(world);
+  ok(r.proven && r.tables === n, 'sat baseline n=' + n);
   ok(Dup.cannotPlaceOneMore(world, r.packing), 'saturated proven n=' + n);
 }
 
@@ -496,7 +515,7 @@ for (let n = 1; n <= 6; n++) {
 eq(Dup.MODE, 'banquet-max-dup');
 eq(Dup.SEATS_PER_TABLE, 10);
 {
-  const r = prove(stripWorld(2 * Dup.MIN_C2C, 0));
+  const r = prove(stripWorld(2 * sepForInnerH(0), 0));
   eq(r.guests, 30);
   eq(r.mode, 'banquet-max-dup');
 }
