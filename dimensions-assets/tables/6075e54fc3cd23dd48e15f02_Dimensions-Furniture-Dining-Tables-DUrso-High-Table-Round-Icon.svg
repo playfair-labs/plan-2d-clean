@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+]>
+<svg version="1.1" xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="750px" height="750px"
+	 viewBox="0 0 750 750" enable-background="new 0 0 750 750" xml:space="preserve">
+<metadata>
+	<sfw  xmlns="&ns_sfw;">
+		<slices></slices>
+		<sliceSourceBounds  bottomLeftOrigin="true" height="13213.728" width="5299" x="-2000" y="-4314"></sliceSourceBounds>
+	</sfw>
+</metadata>
+<g id="FILL-BACKGROUND">
+	<rect fill="#FFFFFF" width="750" height="750"/>
+</g>
+<g id="N-DIMENSIONS">
+</g>
+<g id="N-TEXT">
+</g>
+<g id="_x32_D_x24_AG-DIAGRAM">
+	<g id="POLYLINE_453_">
+		<g>
+			<g>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="170.402" y1="545.442" x2="172.402" y2="545.442"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.0218,7.0382" x1="179.44" y1="545.442" x2="574.079" y2="545.442"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="577.598" y1="545.442" x2="579.598" y2="545.442"/>
+			</g>
+		</g>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-DETAILS-DIAGRAM">
+</g>
+<g id="_x32_D_x24_AG-DETAILS">
+	<g id="POLYLINE_369_">
+		
+			<line fill="none" stroke="#1B7FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="516.782" y1="507.402" x2="516.782" y2="257.426"/>
+	</g>
+	<g id="POLYLINE_368_">
+		
+			<line fill="none" stroke="#1B7FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="233.218" y1="507.402" x2="233.218" y2="257.426"/>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-FURNITURE">
+	<g id="POLYLINE_238_">
+		
+			<polyline fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+			241.861,257.426 226.425,257.426 226.425,507.402 248.162,507.402 248.162,279.163 		"/>
+	</g>
+	<g id="POLYLINE_237_">
+		
+			<polyline fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+			508.139,257.426 523.575,257.426 523.575,507.402 501.838,507.402 501.838,279.163 		"/>
+	</g>
+	<g id="POLYLINE_236_">
+		
+			<rect x="241.861" y="257.426" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="266.279" height="21.737"/>
+	</g>
+	<g id="POLYLINE_235_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M505.402,512.977c-8.028-1.072-15.682,3.988-17.84,11.795c-2.041,7.274,1.269,15.09,7.912,18.687
+			c6.533,3.576,14.772,2.208,19.798-3.287c5.563-6.035,5.741-15.353,0.412-21.596"/>
+	</g>
+	<g id="POLYLINE_234_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M500.244,528.108c-0.429,1.224-0.031,2.653,0.97,3.479c0.924,0.79,2.296,0.974,3.395,0.454c0.234-0.108,0.459-0.247,0.66-0.409
+			c0.143-0.115,0.28-0.246,0.401-0.384c0.032-0.037,0.077-0.09,0.107-0.128c0,0,13.722-17.375,13.722-17.375v-2.267h-13.586
+			C505.913,511.478,500.244,528.108,500.244,528.108z"/>
+	</g>
+	<g id="POLYLINE_233_">
+		
+			<rect x="507.476" y="507.402" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="10.459" height="4.076"/>
+	</g>
+	<g id="POLYLINE_232_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M229.99,512.977c-8.028-1.072-15.682,3.988-17.84,11.795c-2.041,7.274,1.269,15.09,7.912,18.687
+			c6.533,3.576,14.772,2.208,19.798-3.287c5.563-6.035,5.741-15.353,0.412-21.596"/>
+	</g>
+	<g id="POLYLINE_231_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M224.832,528.108c-0.429,1.224-0.031,2.653,0.97,3.479c0.924,0.79,2.296,0.974,3.395,0.454c0.234-0.108,0.459-0.247,0.66-0.409
+			c0.143-0.115,0.28-0.246,0.401-0.384c0.032-0.037,0.077-0.09,0.107-0.128c0,0,13.722-17.375,13.722-17.375v-2.267h-13.586
+			C230.501,511.478,224.832,528.108,224.832,528.108z"/>
+	</g>
+	<g id="POLYLINE_230_">
+		
+			<rect x="232.064" y="507.402" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="10.459" height="4.076"/>
+	</g>
+	<g id="POLYLINE_227_">
+		
+			<rect x="81.55" y="246.558" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="586.901" height="10.869"/>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-OUTLINE">
+	<g id="POLYLINE_56_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M81.55,246.558H668.45v10.869H523.575v249.976h-5.639v4.076h1.563v2.267l-3.814,4.829c5.287,6.199,5.16,15.416-0.295,21.468
+			c-5.018,5.6-13.318,7.024-19.915,3.416c-6.611-3.583-9.921-11.326-7.941-18.58c2.121-7.866,9.793-12.976,17.869-11.901
+			l0.511-1.499h1.563v-4.076h-5.639V279.163H248.162v228.239h-5.639v4.076h1.563v2.267l-3.814,4.829
+			c5.287,6.199,5.16,15.416-0.295,21.468c-5.018,5.6-13.318,7.024-19.915,3.416c-6.611-3.583-9.921-11.326-7.941-18.58
+			c2.121-7.866,9.793-12.976,17.869-11.901l0.511-1.499h1.563v-4.076h-5.639V257.426H81.55V246.558z"/>
+	</g>
+</g>
+</svg>

@@ -2,8 +2,8 @@
  * MUST NOT be used by banquet Max PAX / packHexSync / BEST_SEED.
  * Spacing from qt-paramatta-3d-hotel/src/lib/industry-spacing.ts INDUSTRY
  * and hire-guess.ts (trestle / chair metres). Chair icons follow
- * dimensions.com meeting-room layouts: banquet/cabaret = round-table chair;
- * classroom/theatre/u-shape = conference stacking chair. Icons black.
+ * Soft dimensions-assets ASSET_MAP (BLACK): banquet/cabaret = dining-formal;
+ * classroom/theatre/u-shape = meeting-circle chair.
  */
 (function (root) {
   'use strict';

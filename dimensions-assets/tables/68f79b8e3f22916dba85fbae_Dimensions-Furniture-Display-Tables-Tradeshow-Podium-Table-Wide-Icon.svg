@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="750" version="1.1" viewBox="0 0 750 750">
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <g id="FILL-BACKGROUND">
+    <rect width="750" height="750" fill="#fff"/>
+  </g>
+  <g id="_x32_D_x24_AG-DIAGRAM">
+    <g id="POLYLINE">
+      <g>
+        <line x1="124.826" y1="557.82" x2="127.326" y2="557.82" fill="none" stroke="#1b7fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.25"/>
+        <line x1="134.275" y1="557.82" x2="619.2" y2="557.82" fill="none" stroke="#1b7fff" stroke-dasharray="4.963 6.949" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.25"/>
+        <line x1="622.674" y1="557.82" x2="625.174" y2="557.82" fill="none" stroke="#1b7fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.25"/>
+      </g>
+    </g>
+  </g>
+  <g id="_x32_D_x24_AG-FURNITURE">
+    <g id="POLYLINE1" data-name="POLYLINE">
+      <rect x="124.826" y="192.18" width="500.348" height="9.776" fill="none" stroke="#1b7fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.75"/>
+    </g>
+    <g id="POLYLINE2" data-name="POLYLINE">
+      <rect x="144.378" y="201.956" width="461.244" height="355.863" fill="none" stroke="#1b7fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.75"/>
+    </g>
+  </g>
+  <g id="_x32_D_x24_AG-OUTLINE">
+    <g id="POLYLINE3" data-name="POLYLINE">
+      <polygon points="605.622 201.956 625.174 201.956 625.174 192.18 124.826 192.18 124.826 201.956 144.378 201.956 144.378 557.82 605.622 557.82 605.622 201.956" fill="none" stroke="#1b7fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+    </g>
+  </g>
+  <metadata>
+    <sfw xmlns="http://ns.adobe.com/SaveForWeb/1.0/">
+      <slices/>
+      <sliceSourceBounds x="-3565.15" y="300" width="5680.15" height="4058.92" bottomLeftOrigin="true"/>
+    </sfw>
+  </metadata>
+</svg>
