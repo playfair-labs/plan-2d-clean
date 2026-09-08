@@ -15,6 +15,8 @@ assert.ok(/function isPlaceableKitType\(/.test(html), 'placeable kit types');
 assert.ok(/canPlaceKitOnSurface\(placeKit, surface\)/.test(html), 'hits on stage/dance stamp kit');
 assert.ok(/BANQUET_DANCE_N = 4/.test(html), 'banquet dance is a 4×4 of tiles');
 assert.ok(/typ==='dance' \? 'Dance tile deleted'/.test(html), 'delete one dance tile');
+assert.ok(/window\.addEventListener\('pointermove', onMove\)/.test(html), 'composite drag tracks pointer on window');
+assert.ok(/Do not rebuild SVG here/.test(html), 'pointerdown keeps the hit for capture');
 
 function decksFlush(a,b,slop){
   slop = slop==null ? 0.1 : slop;

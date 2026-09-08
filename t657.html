@@ -1671,7 +1671,6 @@ function onDown(evt){
   const members=groupMembers(it);
   // long-press lock (touch / trackpad)
   clearTimeout(longPressTimer);
-  try { evt.currentTarget.setPointerCapture(evt.pointerId); } catch (err) {}
   const startX=evt.clientX, startY=evt.clientY;
   longPressTimer=setTimeout(()=>{
     if (!drag) return;
@@ -1685,9 +1684,9 @@ function onDown(evt){
     lastLegal: members.map(m=>({id:m.id,x:m.x,z:m.z})),
     _cx:startX, _cy:startY, _sx:startX, _sy:startY,
   };
-  render();
-  const el=world.querySelector('.hit[data-id="'+id+'"]:not([data-seat])') || world.querySelector('.hit[data-id="'+id+'"]');
-  if (el) { try { el.setPointerCapture(evt.pointerId); } catch (err) {} }
+  // Do not rebuild SVG here — replacing the hit releases pointer capture and kills the drag.
+  try { evt.currentTarget.setPointerCapture(evt.pointerId); } catch (err) {}
+  syncDeleteButton();
 }
 function deleteSeat(it, seat){
   if (!it || it.type!=='round') return;
@@ -1798,9 +1797,9 @@ svg.addEventListener('pointerdown', (evt)=>{
   if (!selectedId) return;
   selectedId=null; selectedSeat=null; render();
 });
-svg.addEventListener('pointermove', onMove);
-svg.addEventListener('pointerup', settle);
-svg.addEventListener('pointercancel', settle);
+window.addEventListener('pointermove', onMove);
+window.addEventListener('pointerup', settle);
+window.addEventListener('pointercancel', settle);
 
 document.getElementById('deleteBtn').onclick=()=>deleteSelected();
 window.addEventListener('keydown', (e)=>{
