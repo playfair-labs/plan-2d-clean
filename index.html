@@ -22,7 +22,8 @@
     flex-shrink:0;
   }
   .top strong { font-size:14px; letter-spacing:.05em; font-weight:700; }
-  .ui-tog { display:flex; gap:2px; }
+  .ui-tog { display:flex; gap:2px; align-items:center; }
+  .sec .ui-tog button { height:28px; padding:0 8px; font-size:11px; }
   .ui-tog button {
     background:transparent; color:var(--muted); border:1px solid transparent;
     border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer;
@@ -134,17 +135,25 @@
   .rail-field.dragging { opacity: 0.55; cursor: grabbing; }
   .rail-field.drag-over { outline: 1px dashed #8a8680; outline-offset: 2px; border-radius: 8px; }
   .rail-field::before { content: "⋮⋮"; position: absolute; left: -2px; top: 50%; transform: translateY(-50%); font-size: 9px; color: #6a6660; letter-spacing: -2px; opacity: 0.55; pointer-events: none; }
+
+  .myui-hint { color:var(--muted); font-size:12px; line-height:1.35; padding:6px 2px 10px; }
+  .myui-hint strong { color:var(--ink); font-weight:700; }
+  .ctx-menu {
+    position:fixed; z-index:50; min-width:180px; padding:4px;
+    background:#2a2825; border:1px solid var(--line); border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .ctx-menu button {
+    display:block; width:100%; text-align:left; border:0; background:transparent;
+    color:var(--ink); font:inherit; font-size:13px; font-weight:600;
+    padding:8px 10px; border-radius:8px; cursor:pointer;
+  }
+  .ctx-menu button:hover { background:var(--soft); }
 </style>
 </head>
 <body>
 <div class="top">
   <strong>GRAND · PLAN 2D</strong>
-  <div class="ui-tog" role="tablist" aria-label="Left rail UI">
-    <button type="button" data-ui="1" class="on">UI 1</button>
-    <button type="button" data-ui="2">UI 2</button>
-    <button type="button" data-ui="3">UI 3</button>
-    <button type="button" data-ui="4">UI 4</button>
-  </div>
 </div>
 <div class="shell">
   <aside class="rail" aria-label="Essentials">
@@ -285,6 +294,21 @@
       <div class="count tableCount"></div>
       <div class="status-line status"></div>
     </div>
+
+    <!-- UI5 My UI — pick fields from UI 1–4 -->
+    <div class="rail-pane" data-pane="5">
+      <div class="myui-hint" id="myUiHint"><strong>My UI.</strong> On UI 1–4, right-click a field → Add to My UI. Drag to reorder here. Right-click here → Remove.</div>
+      <div id="myUiFields"></div>
+      <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
+      <div class="rail-tools">
+        <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
+        <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
+        <button type="button" class="quiet-btn clearBtn">Clear room</button>
+      </div>
+      <div class="count tableCount"></div>
+      <div class="status-line status"></div>
+    </div>
   </aside>
 
   <div class="mapwrap">
@@ -295,6 +319,14 @@
       <button type="button" id="shuffleBtn">Shuffle</button>
       <span class="sep"></span>
       <button type="button" id="deleteBtn">Delete</button>
+      <span class="sep"></span>
+      <div class="ui-tog" role="tablist" aria-label="Left rail UI">
+        <button type="button" data-ui="1" class="on">UI 1</button>
+        <button type="button" data-ui="2">UI 2</button>
+        <button type="button" data-ui="3">UI 3</button>
+        <button type="button" data-ui="4">UI 4</button>
+        <button type="button" data-ui="5">My UI</button>
+      </div>
     </div>
     <div class="zoom-bar">
       <button type="button" id="zoomOut" title="Zoom out">−</button>
@@ -1161,7 +1193,6 @@ svg.addEventListener('pointerdown', (evt)=>{
 svg.addEventListener('pointermove', onMove);
 svg.addEventListener('pointerup', settle);
 svg.addEventListener('pointercancel', settle);
-svg.addEventListener('contextmenu', (e)=>e.preventDefault());
 
 document.getElementById('deleteBtn').onclick=()=>deleteSelected();
 window.addEventListener('keydown', (e)=>{
@@ -1568,7 +1599,230 @@ window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o|
 fillKitHosts();
 wireSharedActions();
 bindBrief();
+
+(function mapAddContextMenu(){
+  let menu=null;
+  function hide(){ if(menu){ menu.remove(); menu=null; } }
+  document.addEventListener('click', hide);
+  svg.addEventListener('contextmenu', (e)=>{
+    e.preventDefault();
+    // Don't steal item hit context if any future per-item menu; empty map / background = Add
+    if (e.target.closest && e.target.closest('.hit')) return;
+    hide();
+    const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
+    menu = document.createElement('div');
+    menu.className = 'ctx-menu';
+    menu.style.left = e.clientX+'px';
+    menu.style.top = e.clientY+'px';
+    const title=document.createElement('div');
+    title.style.cssText='padding:6px 10px 4px;color:#8a8680;font-size:11px;font-weight:700;';
+    title.textContent='Add here';
+    menu.appendChild(title);
+    KIT_ITEMS.forEach(k=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent=k.label;
+      b.onclick=()=>{
+        hide();
+        stampKitAt(k.kind, p.x, p.z);
+      };
+      menu.appendChild(b);
+    });
+    // also allow add table at point
+    const tb=document.createElement('button');
+    tb.type='button';
+    tb.textContent='Table';
+    tb.onclick=()=>{
+      hide();
+      const cand={ id:'tmp', kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false };
+      if (!isLegal(cand)){ setStatus('No room for table here'); return; }
+      seq++;
+      items.push({ id:'t'+seq, kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+      const n=renumberTables();
+      render();
+      setStatus('Table added · '+n+' tables');
+    };
+    menu.appendChild(tb);
+    document.body.appendChild(menu);
+  });
+})();
+
+
 applyBriefToDom();
+
+/* ——— UI 5 My UI: right-click Add from UI 1–4 ——— */
+(function initMyUi(){
+  const KEY = 'plan2d-my-ui-v1';
+  const host = document.getElementById('myUiFields');
+  const hint = document.getElementById('myUiHint');
+  if (!host) return;
+  let menu = null;
+
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; } }
+  function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+
+  function scrubClone(el){
+    el.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    el.classList.add('rail-field');
+    el.setAttribute('draggable','true');
+    el.dataset.myui = '1';
+    // Guests stepper without duplicate ids — use plain number if stepper present
+    const step = el.querySelector('.step');
+    if (step){
+      const field = el.dataset.field;
+      if (field === 'people'){
+        el.innerHTML = '<label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" />';
+        el.className = 'door rail-field';
+        el.setAttribute('draggable','true');
+        el.dataset.field = 'people';
+        el.dataset.myui = '1';
+      }
+    }
+    return el;
+  }
+
+  function bindFieldInputs(root){
+    root.querySelectorAll('.sync-client').forEach(el=>{
+      el.oninput = ()=>{ brief.client=el.value; applyBriefToDom(); };
+    });
+    root.querySelectorAll('.sync-date').forEach(el=>{
+      el.oninput = el.onchange = ()=>{ brief.date=el.value; applyBriefToDom(); };
+    });
+    root.querySelectorAll('.sync-people').forEach(el=>{
+      if (el.type==='hidden') return;
+      const onP=()=>{ brief.people=el.value; applyBriefToDom(); syncTablesToPeople(); };
+      el.oninput = el.onchange = onP;
+    });
+    root.querySelectorAll('select.sync-style').forEach(el=>{
+      el.onchange = ()=>{ brief.style=el.value; applyBriefToDom(); applyBanquetBigStuff(brief.style); };
+    });
+  }
+
+  function persistFromDom(){
+    const list = [...host.querySelectorAll(':scope > .rail-field')].map(el => ({
+      field: el.dataset.field,
+      html: el.outerHTML
+    }));
+    save(list);
+    if (hint) hint.style.display = list.length ? 'none' : '';
+  }
+
+  function wireMyUiDrag(){
+    let dragEl=null;
+    host.querySelectorAll(':scope > .rail-field').forEach(field=>{
+      field.ondragstart = (e)=>{
+        if (e.target.closest('input,select,textarea,button')) { e.preventDefault(); return; }
+        dragEl = field;
+        field.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', field.dataset.field||''); } catch {}
+      };
+      field.ondragend = ()=>{
+        field.classList.remove('dragging');
+        host.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'));
+        dragEl=null;
+        persistFromDom();
+      };
+      field.ondragover = (e)=>{
+        e.preventDefault();
+        if (!dragEl || dragEl===field) return;
+        field.classList.add('drag-over');
+        const rect=field.getBoundingClientRect();
+        const before=(e.clientY-rect.top)<rect.height/2;
+        if (before) host.insertBefore(dragEl, field);
+        else host.insertBefore(dragEl, field.nextSibling);
+      };
+      field.ondragleave = ()=> field.classList.remove('drag-over');
+      field.ondrop = (e)=>{ e.preventDefault(); field.classList.remove('drag-over'); };
+    });
+  }
+
+  function rebuild(){
+    const list = load();
+    host.innerHTML = '';
+    list.forEach(item=>{
+      const wrap = document.createElement('div');
+      wrap.innerHTML = item.html;
+      const el = wrap.firstElementChild;
+      if (!el) return;
+      scrubClone(el);
+      host.appendChild(el);
+    });
+    if (hint) hint.style.display = list.length ? 'none' : '';
+    bindFieldInputs(host);
+    wireMyUiDrag();
+    applyBriefToDom();
+    // refresh shared tool wires for new pane buttons already in HTML
+  }
+
+  function hideMenu(){
+    if (menu){ menu.remove(); menu=null; }
+  }
+
+  function showMenu(x,y, buttons){
+    hideMenu();
+    menu = document.createElement('div');
+    menu.className = 'ctx-menu';
+    menu.style.left = x+'px';
+    menu.style.top = y+'px';
+    buttons.forEach(({label, action})=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent=label;
+      b.onclick=()=>{ hideMenu(); action(); };
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+  }
+
+  document.addEventListener('click', hideMenu);
+  document.addEventListener('contextmenu', (e)=>{
+    const field = e.target.closest('.rail-field');
+    if (!field) return;
+    const pane = field.closest('.rail-pane');
+    if (!pane) return;
+    const paneId = pane.dataset.pane;
+    // UI 1–4: add to My UI
+    if (paneId && paneId !== '5' && field.dataset.field){
+      e.preventDefault();
+      showMenu(e.clientX, e.clientY, [{
+        label: 'Add to My UI',
+        action: ()=>{
+          const list = load().filter(x => x.field !== field.dataset.field); // one of each field
+          const clone = field.cloneNode(true);
+          scrubClone(clone);
+          list.push({ field: field.dataset.field, html: clone.outerHTML });
+          save(list);
+          rebuild();
+          setUi(5);
+          setStatus('Added '+ (field.dataset.field) +' to My UI');
+        }
+      }]);
+      return;
+    }
+    // UI 5: remove
+    if (paneId === '5' && field.dataset.field){
+      e.preventDefault();
+      showMenu(e.clientX, e.clientY, [{
+        label: 'Remove from My UI',
+        action: ()=>{
+          save(load().filter(x => x.field !== field.dataset.field));
+          rebuild();
+          setStatus('Removed from My UI');
+        }
+      },{
+        label: 'Clear My UI',
+        action: ()=>{ save([]); rebuild(); setStatus('My UI cleared'); }
+      }]);
+    }
+  });
+
+  rebuild();
+  // After wireSharedActions runs, re-sync screen keep buttons etc. — call after init order
+  window.__rebuildMyUi = rebuild;
+})();
+
+if (window.__rebuildMyUi) window.__rebuildMyUi();
+
 
 document.getElementById('zoomIn').onclick=()=>zoomBy(1.2);
 document.getElementById('zoomOut').onclick=()=>zoomBy(1/1.2);
