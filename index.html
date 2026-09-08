@@ -692,17 +692,20 @@ function fitPermanentIntoPerimeter(it){
 }
 
 function tidyLayout(mode, quiet){
+  // Tidy ONLY rearranges existing unlocked tables — never removes any.
   const movables=packableMove().map(m=>({...m}));
   if (!movables.length){ if(!quiet) setStatus('Nothing to tidy'); return; }
   const kept=items.filter(i=>i.kind==='permanent' || isLocked(i));
+  const n=movables.length;
   const c2c=MIN_C2C;
   const xs=ROOM.map(p=>p[0]), zs=ROOM.map(p=>p[1]);
-  const left=Math.min(...xs)+BODY_R+0.5, right=Math.max(...xs)-BODY_R-0.5;
-  const bottom=Math.min(...zs)+BODY_R+DOOR_KEEP_GUEST+0.2;
-  const top=Math.max(...zs)-BODY_R-0.5;
-  const usableW=right-left, usableH=top-bottom;
-  const cols=Math.max(1, Math.floor(usableW/c2c)+1);
-  const rows=Math.max(1, Math.floor(usableH/c2c)+1);
+  const left=Math.min(...xs)+BODY_R+WALL_AISLE, right=Math.max(...xs)-BODY_R-WALL_AISLE;
+  const bottom=Math.min(...zs)+BODY_R+Math.max(DOOR_KEEP_GUEST, WALL_AISLE);
+  const top=Math.max(...zs)-BODY_R-WALL_AISLE;
+  const usableW=Math.max(c2c, right-left), usableH=Math.max(c2c, top-bottom);
+  // Enough slots for every table (ceil), not a sparse floor grid that can starve N
+  const cols=Math.max(1, Math.ceil(Math.sqrt(n * usableW / usableH)));
+  const rows=Math.max(1, Math.ceil(n / cols));
   const blockW=(cols-1)*c2c, blockH=(rows-1)*c2c;
   const x0=left+(usableW-blockW)/2, z0=top-(usableH-blockH)/2;
   const stagger=mode==='staggered';
@@ -712,23 +715,41 @@ function tidyLayout(mode, quiet){
     const rowCols=stagger&&(r%2===1)?Math.max(1,cols-1):cols;
     for (let c=0;c<rowCols;c++) slots.push({ x:x0+rowShift+c*c2c, z:z0-r*c2c });
   }
-  const placed=[]; items=kept.slice();
-  movables.sort((a,b)=>String(a.label).localeCompare(String(b.label)));
+  // Extra staggered/offset passes if still short of N slots
+  while (slots.length < n){
+    const k=slots.length;
+    slots.push({ x:left + (k % cols)*c2c + (stagger?c2c/4:0), z:top - Math.floor(k/cols)*c2c });
+  }
+  const used=new Set();
+  const placed=[];
+  movables.sort((a,b)=>String(a.label).localeCompare(String(b.label), undefined, {numeric:true}));
   for (const m of movables){
-    let done=false;
-    for (const s of slots){
-      const cand={...m,x:s.x,z:s.z};
+    let cand=null;
+    for (let i=0;i<slots.length;i++){
+      if (used.has(i)) continue;
+      const tryP={...m, x:slots[i].x, z:slots[i].z};
       items=kept.concat(placed);
-      if (isLegal(cand)){ placed.push(cand); done=true; break; }
+      if (isLegal(tryP)){ cand=tryP; used.add(i); break; }
     }
-    if (!done){
+    if (!cand){
+      items=kept.concat(placed);
+      const orig={...m};
+      if (isLegal(orig)) cand=orig;
+    }
+    if (!cand){
+      items=kept.concat(placed);
       const slot=findFreeSlot(m.w,m.d,m.id);
-      if (slot) placed.push({...m,...slot});
+      if (slot) cand={...m, ...slot};
     }
+    if (!cand){
+      // Last resort: keep prior pose — never drop the table
+      cand={...m};
+    }
+    placed.push(cand);
   }
   items=kept.concat(placed);
   renumberTables();
-  if (!quiet){ render(); setStatus('Tidied · '+mode+' · '+placed.length); }
+  if (!quiet){ render(); setStatus('Tidied · '+mode+' · '+placed.length+' tables (none removed)'); }
 }
 function shuffleMovables(quiet){
   const movables=packableMove().map(m=>({...m}));
