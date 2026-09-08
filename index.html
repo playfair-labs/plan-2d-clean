@@ -1099,19 +1099,8 @@ function toggleLock(it){
   render();
 }
 function onContextLock(evt){
-  evt.preventDefault(); evt.stopPropagation();
-  const id=evt.currentTarget.dataset.id;
-  const it=items.find(x=>x.id===id); if(!it) return;
-  // Stage: right-click deletes THAT deck only
-  if (it.type==='stage'){
-    items=items.filter(x=>x.id!==it.id);
-    selectedId=null; drag=null;
-    recomputeStageGroups();
-    setStatus('Stage deck removed');
-    render();
-    return;
-  }
-  toggleLock(it);
+  // Right-click is Add menu only — never delete/lock here. Do not stopPropagation.
+  evt.preventDefault();
 }
 function onDown(evt){
   if (placeKit) return;
@@ -1758,7 +1747,7 @@ refreshStyleSelects();
   document.addEventListener('click', hide);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
-    if (e.target.closest && e.target.closest('.hit')) return;
+    // Right-click anywhere on map = Add / Templates menu (never delete)
     hide();
     const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
     menu = document.createElement('div');
