@@ -151,6 +151,29 @@
   .ctx-menu button:hover { background:var(--soft); }
   .ctx-menu .sec-lab { padding:8px 10px 2px; color:#8a8680; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
   .ctx-menu .sec-lab:first-child { padding-top:4px; }
+
+  .proto-type {
+    display:flex; align-items:center; gap:4px; flex-wrap:wrap;
+    margin-left:auto; padding-left:8px;
+    border-left:1px solid #3a3834;
+  }
+  .proto-type .proto-lab { color:#8a8680; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
+  .proto-type button {
+    height:28px; min-width:32px; padding:0 8px; border-radius:8px;
+    border:1px solid #3a3834; background:#242220; color:var(--ink);
+    font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .proto-type button.on { border-color:#c9a227; color:#c9a227; }
+  .rail, .sec, .ctx-menu, .top {
+    font-size: var(--ui-font-px, 13px);
+    font-weight: var(--ui-font-w, 500);
+  }
+  .rail label, .rail .q, .rail .tiny-lab, .rail .fixed, .rail .quiet-btn,
+  .rail input, .rail select, .rail summary, .sec button, .ctx-menu button {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .rail .quiet-btn, .sec button { font-weight: var(--ui-font-w, 700); }
 </style>
 </head>
 <body>
@@ -162,8 +185,6 @@
     <!-- UI1 Brief fields -->
     <div class="rail-pane on" data-pane="1">
       <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
-      <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
       <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
         <select class="sync-style">
           <option value="banquet" selected>Banquet</option>
@@ -178,6 +199,8 @@
           <option value="theatre">Theatre</option>
         </select>
       </div>
+      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
       <div class="rail-tools">
@@ -329,6 +352,12 @@
         <button type="button" data-ui="4">UI 4</button>
         <button type="button" data-ui="5">My UI</button>
       </div>
+      <div class="proto-type" title="Prototype only — not for product">
+        <span class="proto-lab">Type</span>
+        <button type="button" id="protoFontDown" title="Smaller">A−</button>
+        <button type="button" id="protoFontUp" title="Larger">A+</button>
+        <button type="button" id="protoBold" title="Bold on/off">Bold</button>
+      </div>
     </div>
     <div class="zoom-bar">
       <button type="button" id="zoomOut" title="Zoom out">−</button>
@@ -449,31 +478,29 @@ function updateCounts(){
 }
 /** Match unlocked banquet tables to ceil(people/10). Adds when guests rise; trims unlocked extras when guests fall. Locks + permanents untouched. */
 function syncTablesToPeople(){
+  // Guests acts like Max PAX: dense-pack up to ceil(guests/10)
   const need = tablesNeeded();
-  if (!need){ updateCounts(); return; }
-  const locked = items.filter(i=>i.kind==='move'&&i.type==='round'&&isLocked(i));
-  let unlocked = items.filter(i=>i.kind==='move'&&i.type==='round'&&!isLocked(i));
-  const other = items.filter(i=>!(i.kind==='move'&&i.type==='round'));
-  // Trim unlocked extras (highest labels first)
-  if (locked.length + unlocked.length > need) {
-    const keepUnlock = Math.max(0, need - locked.length);
-    unlocked.sort((a,b)=>String(a.label).localeCompare(String(b.label), undefined, {numeric:true}));
-    unlocked = unlocked.slice(0, keepUnlock);
-  }
-  items = other.concat(locked, unlocked);
-  // Add until need
-  let guard = 0;
-  while (items.filter(i=>i.kind==='move'&&i.type==='round').length < need && guard++ < 80){
-    const slot = findFreeSlot(TABLE_D, TABLE_D);
-    if (!slot){ setStatus('Need '+need+' tables · floor full at '+items.filter(i=>i.kind==='move'&&i.type==='round').length); break; }
-    seq++;
-    items.push({ id:'t'+seq, kind:'move', type:'round', x:slot.x, z:slot.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
-  }
-  renumberTables();
-  render();
-  const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
   const p = parseInt(brief.people, 10);
-  setStatus(p + ' pax · ' + n + ' tables (' + SEATS_PER_TABLE + ' seats each)');
+  if (!need){ updateCounts(); return; }
+  const kept = items.filter(i=>i.kind==='permanent' || isLocked(i));
+  items = kept.slice();
+  const solids = packSolidsFromItems();
+  const lockedPts = kept.filter(i=>i.type==='round' && isLocked(i)).map(t=>({x:t.x,z:t.z}));
+  // Aim high, then keep only `need` densest-first results
+  let placed = packHexSync(solids, lockedPts, {
+    gapStep: screenKeepOn ? 0.32 : 0.22,
+    target: Math.max(need + 6, 24)
+  });
+  if (placed.length > need) placed = placed.slice(0, need);
+  for (const pt of placed){
+    seq++;
+    items.push({ id:'t'+seq, kind:'move', type:'round', x:pt.x, z:pt.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+  }
+  pruneIllegalTables();
+  const n = renumberTables();
+  render();
+  if (n < need) setStatus(p+' guests need '+need+' tables · floor fit '+n);
+  else setStatus(p+' guests · '+n+' tables packed');
 }
 
 const KIT_ITEMS = [
@@ -1591,6 +1618,29 @@ function saveBanquetStandard(){
   saveStandards(next);
   brief.style = 'banquet-std:'+id;
   refreshStyleSelects();
+
+/* Prototype type controls — menus only, not product */
+(function protoTypeControls(){
+  const KEY='plan2d-proto-type-v1';
+  let st={ px:14, bold:true };
+  try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY)||'{}')); } catch {}
+  function apply(){
+    document.documentElement.style.setProperty('--ui-font-px', st.px+'px');
+    document.documentElement.style.setProperty('--ui-font-w', st.bold ? '700' : '500');
+    const b=document.getElementById('protoBold');
+    if (b) b.classList.toggle('on', !!st.bold);
+    localStorage.setItem(KEY, JSON.stringify(st));
+  }
+  const down=document.getElementById('protoFontDown');
+  const up=document.getElementById('protoFontUp');
+  const bold=document.getElementById('protoBold');
+  if (down) down.onclick=()=>{ st.px=Math.max(11, st.px-1); apply(); };
+  if (up) up.onclick=()=>{ st.px=Math.min(22, st.px+1); apply(); };
+  if (bold) bold.onclick=()=>{ st.bold=!st.bold; apply(); };
+  apply();
+})();
+
+
   applyBriefToDom();
   setStatus('Saved Banquet · '+name+' — now in Style dropdown');
 }
@@ -1645,9 +1695,15 @@ function bindBrief(){
   });
   document.querySelectorAll('.sync-people').forEach(el=>{
     if (el.type==='hidden') return;
-    const onPeople=()=>{ brief.people=el.value; applyBriefToDom(); syncTablesToPeople(); };
+    let guestTimer=null;
+    const onPeople=()=>{
+      brief.people=el.value;
+      applyBriefToDom();
+      clearTimeout(guestTimer);
+      guestTimer=setTimeout(()=>syncTablesToPeople(), 320);
+    };
     el.addEventListener('input', onPeople);
-    el.addEventListener('change', onPeople);
+    el.addEventListener('change', ()=>{ clearTimeout(guestTimer); brief.people=el.value; applyBriefToDom(); syncTablesToPeople(); });
   });
   document.querySelectorAll('select.sync-style').forEach(el=>{
     el.addEventListener('change', ()=>{
