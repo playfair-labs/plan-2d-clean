@@ -2713,7 +2713,7 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel};
 fillKitHosts();
 wireSharedActions();
 bindBrief();
@@ -2739,7 +2739,9 @@ function placeMenuIcon(kind){
 }
 (function mapAddContextMenu(){
   let menu=null;
+  let openedAt=0;
   function hide(){ if(menu){ menu.remove(); menu=null; } }
+  function hideIfIdle(){ if (Date.now()-openedAt < 400) return; hide(); }
   // Right-click on empty plan is PLACE (no Delete). Soft/Al pack + prior kit.
   const GROUPS = [
     { lab:'Place', items:[
@@ -2770,7 +2772,8 @@ function placeMenuIcon(kind){
     const b=document.createElement('button');
     b.type='button';
     b.innerHTML = placeMenuIcon(k.kind)+'<span>'+k.label+'</span>';
-    b.onclick=(ev)=>{
+    const go=(ev)=>{
+      ev.preventDefault();
       ev.stopPropagation();
       if (k.kind==='avops'){
         fillAvopsChooser(host, p);
@@ -2786,6 +2789,8 @@ function placeMenuIcon(kind){
       }
       stampKitAt(k.kind, p.x, p.z);
     };
+    b.addEventListener('pointerdown', go);
+    b.onclick=go;
     host.appendChild(b);
   }
   function pinMenu(el, clientX, clientY){
@@ -2818,12 +2823,15 @@ function placeMenuIcon(kind){
       const b=document.createElement('button');
       b.type='button';
       b.innerHTML = drapeChooserIcon(k.kind)+'<span>'+k.label+'</span>';
-      b.onclick=(ev)=>{ ev.stopPropagation(); hide(); stampKitAt(k.kind, p.x, p.z); };
+      const go=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); hide(); stampKitAt(k.kind, p.x, p.z); };
+      b.addEventListener('pointerdown', go);
+      b.onclick=go;
       host.appendChild(b);
     });
     pinMenu(host, parseFloat(host.style.left)||0, parseFloat(host.style.top)||0);
+    openedAt = Date.now();
   }
-  document.addEventListener('click', hide);
+  document.addEventListener('click', hideIfIdle);
   document.addEventListener('click', hideItemCtxMenu);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
@@ -2868,6 +2876,7 @@ function placeMenuIcon(kind){
     });
     document.body.appendChild(menu);
     pinMenu(menu, e.clientX, e.clientY);
+    openedAt = Date.now();
   });
 })();
 
