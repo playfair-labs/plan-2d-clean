@@ -225,15 +225,19 @@
           </div>
           <input class="sync-people" type="hidden" value="" />
         </div>
-        <div class="rail-field" draggable="true" data-field="style">
-          <div class="tiny-lab">Style</div>
-          <div class="seg" id="styleSeg">
-            <button type="button" data-style="banquet" class="on">Banquet</button>
-            <button type="button" data-style="cabaret">Cabaret</button>
-            <button type="button" data-style="classroom">Classroom</button>
-            <button type="button" data-style="theatre">Theatre</button>
-          </div>
-          <input class="sync-style" type="hidden" value="banquet" />
+        <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
+          <select class="sync-style">
+            <option value="banquet" selected>Banquet</option>
+            <option value="banquet-s1">Banquet · 1 stage</option>
+            <option value="banquet-s2">Banquet · 2 stage</option>
+            <option value="banquet-s3">Banquet · 3 stage</option>
+            <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+            <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+            <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
+            <option value="cabaret">Cabaret</option>
+            <option value="classroom">Classroom</option>
+            <option value="theatre">Theatre</option>
+          </select>
         </div>
         <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
         <details class="add-wrap kit-details"><summary>Place on map…</summary><div class="kit-pop" data-kit-host></div></details>
@@ -253,15 +257,19 @@
       <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
       <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
-      <div class="rail-field" draggable="true" data-field="style">
-        <div class="tiny-lab">Style</div>
-        <div class="chips" id="styleChips">
-          <button type="button" data-style="banquet" class="on">Banquet</button>
-          <button type="button" data-style="cabaret">Cabaret</button>
-          <button type="button" data-style="classroom">Classroom</button>
-          <button type="button" data-style="theatre">Theatre</button>
-        </div>
-        <input class="sync-style" type="hidden" value="banquet" />
+      <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
+        <select class="sync-style">
+          <option value="banquet" selected>Banquet</option>
+          <option value="banquet-s1">Banquet · 1 stage</option>
+          <option value="banquet-s2">Banquet · 2 stage</option>
+          <option value="banquet-s3">Banquet · 3 stage</option>
+          <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+          <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+          <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
+          <option value="cabaret">Cabaret</option>
+          <option value="classroom">Classroom</option>
+          <option value="theatre">Theatre</option>
+        </select>
       </div>
       <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <div class="staff">
@@ -1473,9 +1481,6 @@ function applyBriefToDom(){
   document.querySelectorAll('.client-echo').forEach(el=>{ el.textContent = brief.client || '—'; });
   const big=document.getElementById('peopleBig');
   if (big) big.textContent = brief.people || '—';
-  document.querySelectorAll('#styleSeg [data-style], #styleChips [data-style]').forEach(b=>{
-    b.classList.toggle('on', b.dataset.style===brief.style);
-  });
   updateCounts();
 }
 
@@ -1547,13 +1552,6 @@ function bindBrief(){
     const n=(parseInt(brief.people,10)||0)+10 || 10;
     brief.people=String(n); applyBriefToDom(); syncTablesToPeople();
   };
-  document.querySelectorAll('#styleSeg [data-style], #styleChips [data-style]').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      brief.style=b.dataset.style;
-      applyBriefToDom();
-      applyBanquetBigStuff(brief.style);
-    });
-  });
 }
 function setUi(mode){
   uiMode=mode;
