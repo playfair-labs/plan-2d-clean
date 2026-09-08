@@ -1,0 +1,68 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>banquet-max-dup — side-track only</title>
+<style>
+  body { font: 14px/1.4 ui-sans-serif, system-ui; margin: 24px; max-width: 720px; color: #222; }
+  h1 { font-size: 18px; }
+  .warn { background: #fff3cd; border: 1px solid #e6d089; padding: 10px 12px; border-radius: 6px; }
+  label { display: block; margin: 10px 0 4px; font-weight: 650; }
+  select, button { font: inherit; padding: 6px 10px; }
+  pre { background: #111; color: #d8f5c8; padding: 12px; overflow: auto; border-radius: 6px; }
+  .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+</style>
+<h1>banquet-max-dup</h1>
+<p class="warn">
+  Duplicate Banquet Max path. Live <code>index.html</code> packing is untouched.
+  Soft copy: <code>Documents/plan-2d-overnight/banquet-max-dup/</code>.
+  Do not enable Pages from this file.
+</p>
+<div class="row">
+  <div>
+    <label for="style">Banquet style (dup mode only)</label>
+    <select id="style">
+      <option value="banquet">Banquet</option>
+      <option value="banquet-s1">Banquet · 1 stage</option>
+      <option value="banquet-s2">Banquet · 2 stage</option>
+      <option value="banquet-s3">Banquet · 3 stage</option>
+      <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+      <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+      <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
+    </select>
+  </div>
+  <div>
+    <label for="sk">Screen keep</label>
+    <select id="sk">
+      <option value="0">off</option>
+      <option value="1">on</option>
+    </select>
+  </div>
+  <button type="button" id="go">Prove Max</button>
+</div>
+<pre id="out">Idle — this is not live Max PAX.</pre>
+<script src="maxpax-dup.js"></script>
+<script>
+const out = document.getElementById('out');
+document.getElementById('go').onclick = function () {
+  const style = document.getElementById('style').value;
+  const sk = document.getElementById('sk').value === '1';
+  out.textContent = 'Working…';
+  setTimeout(function () {
+    const world = BanquetMaxDup.fixtureWorld('grand', { style: style, screenKeepOn: sk });
+    const r = BanquetMaxDup.proveMax(world);
+    out.textContent = JSON.stringify({
+      mode: r.mode,
+      style: style,
+      screenKeepOn: sk,
+      tables: r.tables,
+      guests: r.guests,
+      proven: r.proven,
+      lower: r.lower,
+      upper: r.upper,
+      method: r.method,
+      legal: r.legal,
+      ms: r.ms,
+      notes: r.notes
+    }, null, 2);
+  }, 0);
+};
+</script>
