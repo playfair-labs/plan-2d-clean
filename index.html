@@ -1457,9 +1457,10 @@ document.querySelectorAll('.screenKeepBtn').forEach(b=>{
 });
 
 document.querySelectorAll('.clearBtn').forEach(b=>b.onclick=()=>{
-    items=items.filter(i=>i.kind==='permanent' || isLocked(i));
-    selectedId=null; drag=null; seq=0;
-    render(); setStatus('Room cleared · kit/locked kept');
+    // Everything in the room — stage, dance, AV, tables, locks
+    items=[];
+    selectedId=null; drag=null; seq=0; stageSeq=0;
+    render(); setStatus('Room cleared');
   });
   document.querySelectorAll('.liveMaxBtn').forEach(b=>b.onclick=()=>{
     liveMax=!liveMax;
