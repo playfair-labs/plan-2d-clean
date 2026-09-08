@@ -374,10 +374,50 @@ let selectedId = null;
 function setStatus(t){
   document.querySelectorAll('.status').forEach(el=>{ el.textContent = t || ''; });
 }
+function tablesNeeded(){
+  const p = parseInt(brief.people, 10);
+  if (!Number.isFinite(p) || p < 1) return 0;
+  return Math.ceil(p / SEATS_PER_TABLE);
+}
 function updateCounts(){
-  const n=items.filter(i=>i.kind==='move'&&i.type==='round').length;
-  const text = n ? (n+' tables') : '';
+  const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
+  const need = tablesNeeded();
+  const p = parseInt(brief.people, 10);
+  let text = '';
+  if (need && Number.isFinite(p)) {
+    text = n + ' tables · ' + p + ' pax → ' + need + ' needed (' + SEATS_PER_TABLE + '/tbl)';
+  } else if (n) {
+    text = n + ' tables';
+  }
   document.querySelectorAll('.tableCount').forEach(el=>{ el.textContent = text; });
+}
+/** Match unlocked banquet tables to ceil(people/10). Adds when guests rise; trims unlocked extras when guests fall. Locks + permanents untouched. */
+function syncTablesToPeople(){
+  const need = tablesNeeded();
+  if (!need){ updateCounts(); return; }
+  const locked = items.filter(i=>i.kind==='move'&&i.type==='round'&&isLocked(i));
+  let unlocked = items.filter(i=>i.kind==='move'&&i.type==='round'&&!isLocked(i));
+  const other = items.filter(i=>!(i.kind==='move'&&i.type==='round'));
+  // Trim unlocked extras (highest labels first)
+  if (locked.length + unlocked.length > need) {
+    const keepUnlock = Math.max(0, need - locked.length);
+    unlocked.sort((a,b)=>String(a.label).localeCompare(String(b.label), undefined, {numeric:true}));
+    unlocked = unlocked.slice(0, keepUnlock);
+  }
+  items = other.concat(locked, unlocked);
+  // Add until need
+  let guard = 0;
+  while (items.filter(i=>i.kind==='move'&&i.type==='round').length < need && guard++ < 80){
+    const slot = findFreeSlot(TABLE_D, TABLE_D);
+    if (!slot){ setStatus('Need '+need+' tables · floor full at '+items.filter(i=>i.kind==='move'&&i.type==='round').length); break; }
+    seq++;
+    items.push({ id:'t'+seq, kind:'move', type:'round', x:slot.x, z:slot.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+  }
+  renumberTables();
+  render();
+  const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
+  const p = parseInt(brief.people, 10);
+  setStatus(p + ' pax · ' + n + ' tables (' + SEATS_PER_TABLE + ' seats each)');
 }
 
 const KIT_ITEMS = [
@@ -692,37 +732,52 @@ function fitPermanentIntoPerimeter(it){
 }
 
 function tidyLayout(mode, quiet){
-  // Tidy ONLY rearranges existing unlocked tables — never removes any.
-  const movables=packableMove().map(m=>({...m}));
+  // Rearrange unlocked tables only. NEVER overlap. NEVER drop. Abort→restore if impossible.
+  const snapshot = items.map(i=>({...i}));
+  const movables = packableMove().map(m=>({...m}));
   if (!movables.length){ if(!quiet) setStatus('Nothing to tidy'); return; }
-  const kept=items.filter(i=>i.kind==='permanent' || isLocked(i));
-  const n=movables.length;
-  const c2c=MIN_C2C;
+  const kept = items.filter(i=>i.kind==='permanent' || isLocked(i));
+  const n = movables.length;
+  const c2c = MIN_C2C;
   const xs=ROOM.map(p=>p[0]), zs=ROOM.map(p=>p[1]);
   const left=Math.min(...xs)+BODY_R+WALL_AISLE, right=Math.max(...xs)-BODY_R-WALL_AISLE;
   const bottom=Math.min(...zs)+BODY_R+Math.max(DOOR_KEEP_GUEST, WALL_AISLE);
   const top=Math.max(...zs)-BODY_R-WALL_AISLE;
   const usableW=Math.max(c2c, right-left), usableH=Math.max(c2c, top-bottom);
-  // Enough slots for every table (ceil), not a sparse floor grid that can starve N
-  const cols=Math.max(1, Math.ceil(Math.sqrt(n * usableW / usableH)));
-  const rows=Math.max(1, Math.ceil(n / cols));
-  const blockW=(cols-1)*c2c, blockH=(rows-1)*c2c;
-  const x0=left+(usableW-blockW)/2, z0=top-(usableH-blockH)/2;
-  const stagger=mode==='staggered';
+  const stagger = mode==='staggered';
+  // Fit N into a real C2C grid that fits the room (not a cramped N-pack that spills)
+  let cols = Math.max(1, Math.floor(usableW / c2c) + 1);
+  let rows = Math.max(1, Math.ceil(n / Math.max(1, cols - (stagger?0:0))));
+  // Prefer more columns if room is wide
+  cols = Math.min(cols, Math.max(1, Math.ceil(Math.sqrt(n * usableW / usableH))));
+  rows = Math.max(1, Math.ceil(n / cols));
+  // Grow grid until we have >= n slot centres spaced by c2c
   const slots=[];
-  for (let r=0;r<rows;r++){
-    const rowShift=stagger&&(r%2===1)?c2c/2:0;
-    const rowCols=stagger&&(r%2===1)?Math.max(1,cols-1):cols;
-    for (let c=0;c<rowCols;c++) slots.push({ x:x0+rowShift+c*c2c, z:z0-r*c2c });
+  function buildSlots(C, R){
+    const out=[];
+    const blockW=(C-1)*c2c, blockH=(R-1)*c2c;
+    const x0=left+(usableW-blockW)/2, z0=top-(usableH-blockH)/2;
+    for (let r=0;r<R;r++){
+      const rowShift = stagger && (r%2===1) ? c2c/2 : 0;
+      const rowCols = stagger && (r%2===1) ? Math.max(1, C-1) : C;
+      for (let c=0;c<rowCols;c++) out.push({ x:x0+rowShift+c*c2c, z:z0-r*c2c });
+    }
+    return out;
   }
-  // Extra staggered/offset passes if still short of N slots
-  while (slots.length < n){
-    const k=slots.length;
-    slots.push({ x:left + (k % cols)*c2c + (stagger?c2c/4:0), z:top - Math.floor(k/cols)*c2c });
+  let C=cols, R=rows;
+  for (let grow=0; grow<20; grow++){
+    slots.length=0;
+    slots.push(...buildSlots(C,R));
+    if (slots.length >= n) break;
+    if (C * c2c <= usableW + c2c) C++; else R++;
   }
+  movables.sort((a,b)=>String(a.label).localeCompare(String(b.label), undefined, {numeric:true}));
   const used=new Set();
   const placed=[];
-  movables.sort((a,b)=>String(a.label).localeCompare(String(b.label), undefined, {numeric:true}));
+  function allLegalList(list){
+    items = kept.concat(list);
+    return list.every(t => isLegal(t));
+  }
   for (const m of movables){
     let cand=null;
     for (let i=0;i<slots.length;i++){
@@ -733,23 +788,45 @@ function tidyLayout(mode, quiet){
     }
     if (!cand){
       items=kept.concat(placed);
+      const slot=findFreeSlot(TABLE_D, TABLE_D, m.id);
+      if (slot){
+        const tryP={...m, x:slot.x, z:slot.z};
+        if (isLegal(tryP)) cand=tryP;
+      }
+    }
+    if (!cand){
+      items=kept.concat(placed);
       const orig={...m};
       if (isLegal(orig)) cand=orig;
     }
     if (!cand){
-      items=kept.concat(placed);
-      const slot=findFreeSlot(m.w,m.d,m.id);
-      if (slot) cand={...m, ...slot};
-    }
-    if (!cand){
-      // Last resort: keep prior pose — never drop the table
-      cand={...m};
+      // Impossible without overlap — restore and stop
+      items = snapshot;
+      if (!quiet){ render(); setStatus('Tidy aborted · would stack — left as-was'); }
+      return;
     }
     placed.push(cand);
   }
-  items=kept.concat(placed);
+  if (placed.length !== n || !allLegalList(placed)){
+    items = snapshot;
+    if (!quiet){ render(); setStatus('Tidy aborted · overlap check failed'); }
+    return;
+  }
+  items = kept.concat(placed);
   renumberTables();
-  if (!quiet){ render(); setStatus('Tidied · '+mode+' · '+placed.length+' tables (none removed)'); }
+  // Final pairwise proof
+  const rounds = items.filter(i=>i.kind==='move'&&i.type==='round');
+  for (let i=0;i<rounds.length;i++){
+    for (let j=i+1;j<rounds.length;j++){
+      const dx=rounds[i].x-rounds[j].x, dz=rounds[i].z-rounds[j].z;
+      if (dx*dx+dz*dz < MIN_C2C*MIN_C2C - 1e-9){
+        items = snapshot;
+        if (!quiet){ render(); setStatus('Tidy aborted · C2C fail'); }
+        return;
+      }
+    }
+  }
+  if (!quiet){ render(); setStatus('Tidied · '+mode+' · '+placed.length+' tables · no overlap'); }
 }
 function shuffleMovables(quiet){
   const movables=packableMove().map(m=>({...m}));
@@ -1373,6 +1450,7 @@ function applyBriefToDom(){
   document.querySelectorAll('#styleSeg [data-style], #styleChips [data-style]').forEach(b=>{
     b.classList.toggle('on', b.dataset.style===brief.style);
   });
+  updateCounts();
 }
 function bindBrief(){
   document.querySelectorAll('.sync-client').forEach(el=>{
@@ -1384,18 +1462,20 @@ function bindBrief(){
   });
   document.querySelectorAll('.sync-people').forEach(el=>{
     if (el.type==='hidden') return;
-    el.addEventListener('input', ()=>{ brief.people=el.value; applyBriefToDom(); });
+    const onPeople=()=>{ brief.people=el.value; applyBriefToDom(); syncTablesToPeople(); };
+    el.addEventListener('input', onPeople);
+    el.addEventListener('change', onPeople);
   });
   document.querySelectorAll('select.sync-style').forEach(el=>{
     el.addEventListener('change', ()=>{ brief.style=el.value; applyBriefToDom(); });
   });
   document.getElementById('peopleMinus').onclick=()=>{
     const n=Math.max(1, (parseInt(brief.people,10)||0)-10);
-    brief.people=String(n); applyBriefToDom();
+    brief.people=String(n); applyBriefToDom(); syncTablesToPeople();
   };
   document.getElementById('peoplePlus').onclick=()=>{
     const n=(parseInt(brief.people,10)||0)+10 || 10;
-    brief.people=String(n); applyBriefToDom();
+    brief.people=String(n); applyBriefToDom(); syncTablesToPeople();
   };
   document.querySelectorAll('#styleSeg [data-style], #styleChips [data-style]').forEach(b=>{
     b.addEventListener('click', ()=>{ brief.style=b.dataset.style; applyBriefToDom(); });
