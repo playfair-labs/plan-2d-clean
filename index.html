@@ -1434,7 +1434,7 @@ function render(){
     const w=it.w*S, d=it.d*S;
     const stroke=it.id===selectedId?'#c9a227':'#6e6a64';
     const sw=it.id===selectedId?1.8:1.2;
-    const inset=sw/2+1.6;
+    const inset=sw/2+0.8;
     html+=`<rect x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" style="pointer-events:none"/>`;
     html+=`<clipPath id="stg-clip-${it.id}"><rect x="${x-w/2+inset}" y="${y-d/2+inset}" width="${Math.max(0,w-inset*2)}" height="${Math.max(0,d-inset*2)}"/></clipPath>`;
     html+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="650" fill="#5a5650" clip-path="url(#stg-clip-${it.id})" style="pointer-events:none">Stage</text>`;
@@ -1526,7 +1526,10 @@ function snapAttachDeck(it){
   decks.forEach(d=>mine[d.id]=true);
   const others=items.filter(o=>o.type===it.type && !mine[o.id]);
   if (!others.length) return false;
-  let best=null, bestDist=SNAP;
+  // Drop-on-tile (rightmost column overlap) must still find the nearest legal attach.
+  const overlapping=others.some(o=>decks.some(d=>overlap(aabb(d), aabb(o))));
+  const limit=overlapping ? Math.max(it.w||1, it.d||1)*2+0.6 : SNAP;
+  let best=null, bestDist=limit;
   for (const m of decks){
     for (const o of others){
       const cands=[
@@ -2200,7 +2203,14 @@ function stampKitAt(kind, x, z){
   selectedSeat=null;
   clearPlaceKit();
   render();
-  setStatus('Placed · '+kitLabel(it));
+  if (kind==='stage' || kind==='dance'){
+    const joined=groupMembers(it).length;
+    const unit=kind==='stage' ? 'decks' : 'tiles';
+    const one=kind==='stage' ? 'Stage deck' : 'Dance tile';
+    setStatus(joined>1 ? ((kind==='stage'?'Stage':'Dance')+' snapped · '+joined+' '+unit+' move as one') : one);
+  } else {
+    setStatus('Placed · '+kitLabel(it));
+  }
 }
 
 /* --- brief sync across UI panes --- */

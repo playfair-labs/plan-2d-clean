@@ -66,7 +66,9 @@ function snapAttachDeck(list, it, gap){
   const mine={}; decks.forEach(d=>mine[d.id]=true);
   const others=list.filter(o=>o.type===it.type && !mine[o.id]);
   if (!others.length) return false;
-  let best=null, bestDist=SNAP;
+  const overlapping=others.some(o=>decks.some(d=>overlap(aabb(d), aabb(o))));
+  const limit=overlapping ? Math.max(it.w||1, it.d||1)*2+0.6 : SNAP;
+  let best=null, bestDist=limit;
   for (const m of decks){
     for (const o of others){
       const cands=[
@@ -136,5 +138,18 @@ assert.strictEqual(new Set(mass.map(d=>d.group)).size, 1, 'attached deck joins t
 mass.forEach((a,i)=>mass.forEach((b,j)=>{
   if (i<j) assert.ok(!overlap(aabb(a), aabb(b)), 'attached stage does not overlap');
 }));
+
+// Drop-on-tile: overlapping the rightmost deck still snaps to the free slot
+const rightMost=mass.reduce((a,b)=>a.x>=b.x?a:b);
+const onDeck={
+  id:'stage-on', kind:'permanent', type:'stage', group:null,
+  x:rightMost.x+STAGE_DECK.w*0.35, z:rightMost.z, w:STAGE_DECK.w, d:STAGE_DECK.d
+};
+mass.push(onDeck);
+assert.ok(snapAttachDeck(mass, onDeck, STAGE_GAP), 'overlap on a stage deck still snaps');
+assert.ok(Math.abs(onDeck.x-(rightMost.x+deckPitch))<1e-9, 'overlap resolves one pitch to the right');
+mass.filter(d=>d.id!==onDeck.id).forEach(d=>{
+  assert.ok(!overlap(aabb(onDeck), aabb(d)), 'resolved stage does not sit on the mass');
+});
 
 console.log('stage.test.js ok');

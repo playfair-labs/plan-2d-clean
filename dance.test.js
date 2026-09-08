@@ -16,6 +16,7 @@ assert.ok(/if \(it\.type==='stage'\) snapStageDeck\(it\);/.test(html), 'settle s
 assert.ok(!/for \(const m of groupMembers\(it\)\)\{\s*if \(it\.type==='stage'\) snapStageDeck\(m\)/.test(html), 'no per-member snap loop');
 assert.ok(/items\.push\(it\);\n  if \(kind==='stage'\) recomputeStageGroups\(\);\n  else if \(kind==='dance'\) recomputeDanceGroups\(\);/.test(html), 'group after the new tile is in items');
 assert.ok(/same-type stage\/dance sit on the tile gap/.test(html), 'PAD does not block same-type attach');
+assert.ok(/Drop-on-tile \(rightmost column overlap\)/.test(html), 'overlap on a column still snaps out');
 assert.ok(/function canPlaceKitOnSurface\(/.test(html), 'kit drop on stage/dance');
 assert.ok(/function isPlaceableKitType\(/.test(html), 'placeable kit types');
 assert.ok(/canPlaceKitOnSurface\(placeKit, surface\)/.test(html), 'hits on stage/dance stamp kit');
@@ -95,7 +96,9 @@ function snapAttachDeck(list, it, gap){
   const mine={}; decks.forEach(d=>mine[d.id]=true);
   const others=list.filter(o=>o.type===it.type && !mine[o.id]);
   if (!others.length) return false;
-  let best=null, bestDist=SNAP;
+  const overlapping=others.some(o=>decks.some(d=>overlap(aabb(d), aabb(o))));
+  const limit=overlapping ? Math.max(it.w||1, it.d||1)*2+0.6 : SNAP;
+  let best=null, bestDist=limit;
   for (const m of decks){
     for (const o of others){
       const cands=[
@@ -154,5 +157,12 @@ assert.ok(Math.abs(extra.z-0)<1e-9, 'keeps the row');
 recomputeAttachGroups(floor, 'dance', 'dance-g');
 assert.strictEqual(new Set(floor.map(t=>t.group)).size, 1, 'attached tile joins the dance group');
 assert.ok(floor.every((a,i)=>floor.every((b,j)=>i>=j || !overlap(aabb(a), aabb(b)))), 'attach does not overlap the rightmost column');
+
+// Drop-on-tile: overlapping the rightmost column still snaps out, no leftover overlap
+const onCol={ id:'d-oncol', kind:'permanent', type:'dance', group:null, x:3*pitch, z:pitch, w:1, d:1 };
+floor.push(onCol);
+assert.ok(snapAttachDeck(floor, onCol, DANCE_GAP), 'overlap on the rightmost column still snaps');
+assert.ok(Math.abs(onCol.x-4*pitch)<1e-9, 'overlap resolves to the free column on the right');
+assert.ok(floor.filter(t=>t.id!==onCol.id).every(t=>!overlap(aabb(onCol), aabb(t))), 'resolved tile does not sit on the rightmost column');
 
 console.log('dance.test.js ok');
