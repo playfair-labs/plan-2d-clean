@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
-<meta name="plan2d-build" content="t641" />
+<meta name="plan2d-build" content="t642" />
 <style>
   :root {
     --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
@@ -214,6 +214,11 @@
     color: var(--accent); text-align: center; line-height: 1.2;
   }
   .build-big small { display:block; font-size:11px; font-weight:650; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
+
+  .owner-tag {
+    font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); padding: 2px 2px 6px;
+  }
 </style>
 </head>
 <body>
@@ -358,11 +363,59 @@
       <div class="count tableCount"></div>
       <div class="status-line status"></div>
     </div>
+    <!-- UI5 Zeus — UI1 standard, order+type saved per person -->
+    <div class="rail-pane" data-pane="5" data-owner="zeus">
+      <div class="owner-tag">Zeus</div>
+      <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
+      <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
+        <select class="sync-style">
+          <option value="banquet" selected>Banquet</option>
+          <option value="banquet-s1">Banquet · 1 stage</option>
+          <option value="banquet-s2">Banquet · 2 stage</option>
+          <option value="banquet-s3">Banquet · 3 stage</option>
+          <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+          <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+          <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
+          <option value="cabaret">Cabaret</option>
+          <option value="classroom">Classroom</option>
+          <option value="theatre">Theatre</option>
+        </select>
+      </div>
+      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
+      <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
+      <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
+      <div class="rail-tools">
+        <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
+        <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
+        <button type="button" class="quiet-btn clearBtn">Clear room</button>
+      </div>
+      <div class="count tableCount"></div>
+      <div class="status-line status"></div>
+    </div>
 
-    <!-- UI5 My UI — pick fields from UI 1–4 -->
-    <div class="rail-pane" data-pane="5">
-      <div class="myui-hint" id="myUiHint"><strong>My UI.</strong> On UI 1–4, right-click a field → Add to My UI. Drag to reorder here. Right-click here → Remove.</div>
-      <div id="myUiFields"></div>
+    <!-- UI6 Ebby — UI1 standard, order+type saved per person -->
+    <div class="rail-pane" data-pane="6" data-owner="ebby">
+      <div class="owner-tag">Ebby</div>
+      <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
+      <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
+        <select class="sync-style">
+          <option value="banquet" selected>Banquet</option>
+          <option value="banquet-s1">Banquet · 1 stage</option>
+          <option value="banquet-s2">Banquet · 2 stage</option>
+          <option value="banquet-s3">Banquet · 3 stage</option>
+          <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+          <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+          <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
+          <option value="cabaret">Cabaret</option>
+          <option value="classroom">Classroom</option>
+          <option value="theatre">Theatre</option>
+        </select>
+      </div>
+      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
+      <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
       <div class="rail-tools">
         <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
@@ -375,13 +428,14 @@
     </div>
 
     <div class="rail-mapdock" aria-label="Map tools">
-      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t641</div>
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t642</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
         <button type="button" data-ui="3">UI 3</button>
         <button type="button" data-ui="4">UI 4</button>
-        <button type="button" data-ui="5">My UI</button>
+        <button type="button" data-ui="5">Zeus</button>
+        <button type="button" data-ui="6">Ebby</button>
       </div>
       <div class="map-acts">
         <button type="button" id="addTable">Add table</button>
@@ -1940,176 +1994,7 @@ refreshStyleSelects();
 
 applyBriefToDom();
 
-/* ——— UI 5 My UI: right-click Add from UI 1–4 ——— */
-(function initMyUi(){
-  const KEY = 'plan2d-my-ui-v1';
-  const host = document.getElementById('myUiFields');
-  const hint = document.getElementById('myUiHint');
-  if (!host) return;
-  let menu = null;
-
-  function load(){ try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch { return []; } }
-  function save(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
-
-  function scrubClone(el){
-    el.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
-    el.classList.add('rail-field');
-    el.setAttribute('draggable','true');
-    el.dataset.myui = '1';
-    // Guests stepper without duplicate ids — use plain number if stepper present
-    const step = el.querySelector('.step');
-    if (step){
-      const field = el.dataset.field;
-      if (field === 'people'){
-        el.innerHTML = '<label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" />';
-        el.className = 'door rail-field';
-        el.setAttribute('draggable','true');
-        el.dataset.field = 'people';
-        el.dataset.myui = '1';
-      }
-    }
-    return el;
-  }
-
-  function bindFieldInputs(root){
-    root.querySelectorAll('.sync-client').forEach(el=>{
-      el.oninput = ()=>{ brief.client=el.value; applyBriefToDom(); };
-    });
-    root.querySelectorAll('.sync-date').forEach(el=>{
-      el.oninput = el.onchange = ()=>{ brief.date=el.value; applyBriefToDom(); };
-    });
-    root.querySelectorAll('.sync-people').forEach(el=>{
-      if (el.type==='hidden') return;
-      const onP=()=>{ brief.people=el.value; applyBriefToDom(); syncTablesToPeople(); };
-      el.oninput = el.onchange = onP;
-    });
-    root.querySelectorAll('select.sync-style').forEach(el=>{
-      el.onchange = ()=>{ brief.style=el.value; applyBriefToDom(); applyBanquetBigStuff(brief.style); };
-    });
-  }
-
-  function persistFromDom(){
-    const list = [...host.querySelectorAll(':scope > .rail-field')].map(el => ({
-      field: el.dataset.field,
-      html: el.outerHTML
-    }));
-    save(list);
-    if (hint) hint.style.display = list.length ? 'none' : '';
-  }
-
-  function wireMyUiDrag(){
-    let dragEl=null;
-    host.querySelectorAll(':scope > .rail-field').forEach(field=>{
-      field.ondragstart = (e)=>{
-        if (e.target.closest('input,select,textarea,button')) { e.preventDefault(); return; }
-        dragEl = field;
-        field.classList.add('dragging');
-        try { e.dataTransfer.setData('text/plain', field.dataset.field||''); } catch {}
-      };
-      field.ondragend = ()=>{
-        field.classList.remove('dragging');
-        host.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'));
-        dragEl=null;
-        persistFromDom();
-      };
-      field.ondragover = (e)=>{
-        e.preventDefault();
-        if (!dragEl || dragEl===field) return;
-        field.classList.add('drag-over');
-        const rect=field.getBoundingClientRect();
-        const before=(e.clientY-rect.top)<rect.height/2;
-        if (before) host.insertBefore(dragEl, field);
-        else host.insertBefore(dragEl, field.nextSibling);
-      };
-      field.ondragleave = ()=> field.classList.remove('drag-over');
-      field.ondrop = (e)=>{ e.preventDefault(); field.classList.remove('drag-over'); };
-    });
-  }
-
-  function rebuild(){
-    const list = load();
-    host.innerHTML = '';
-    list.forEach(item=>{
-      const wrap = document.createElement('div');
-      wrap.innerHTML = item.html;
-      const el = wrap.firstElementChild;
-      if (!el) return;
-      scrubClone(el);
-      host.appendChild(el);
-    });
-    if (hint) hint.style.display = list.length ? 'none' : '';
-    bindFieldInputs(host);
-    wireMyUiDrag();
-    applyBriefToDom();
-    // refresh shared tool wires for new pane buttons already in HTML
-  }
-
-  function hideMenu(){
-    if (menu){ menu.remove(); menu=null; }
-  }
-
-  function showMenu(x,y, buttons){
-    hideMenu();
-    menu = document.createElement('div');
-    menu.className = 'ctx-menu';
-    menu.style.left = x+'px';
-    menu.style.top = y+'px';
-    buttons.forEach(({label, action})=>{
-      const b=document.createElement('button');
-      b.type='button';
-      b.textContent=label;
-      b.onclick=()=>{ hideMenu(); action(); };
-      menu.appendChild(b);
-    });
-    document.body.appendChild(menu);
-  }
-
-  document.addEventListener('click', hideMenu);
-  document.addEventListener('contextmenu', (e)=>{
-    const field = e.target.closest('.rail-field');
-    if (!field) return;
-    const pane = field.closest('.rail-pane');
-    if (!pane) return;
-    const paneId = pane.dataset.pane;
-    // UI 1–4: add to My UI
-    if (paneId && paneId !== '5' && field.dataset.field){
-      e.preventDefault();
-      showMenu(e.clientX, e.clientY, [{
-        label: 'Add to My UI',
-        action: ()=>{
-          const list = load().filter(x => x.field !== field.dataset.field); // one of each field
-          const clone = field.cloneNode(true);
-          scrubClone(clone);
-          list.push({ field: field.dataset.field, html: clone.outerHTML });
-          save(list);
-          rebuild();
-          setUi(5);
-          setStatus('Added '+ (field.dataset.field) +' to My UI');
-        }
-      }]);
-      return;
-    }
-    // UI 5: remove
-    if (paneId === '5' && field.dataset.field){
-      e.preventDefault();
-      showMenu(e.clientX, e.clientY, [{
-        label: 'Remove from My UI',
-        action: ()=>{
-          save(load().filter(x => x.field !== field.dataset.field));
-          rebuild();
-          setStatus('Removed from My UI');
-        }
-      },{
-        label: 'Clear My UI',
-        action: ()=>{ save([]); rebuild(); setStatus('My UI cleared'); }
-      }]);
-    }
-  });
-
-  rebuild();
-  // After wireSharedActions runs, re-sync screen keep buttons etc. — call after init order
-  window.__rebuildMyUi = rebuild;
-})();
+/* My UI removed — Zeus (5) + Ebby (6) are UI1-standard panes */
 
 if (window.__rebuildMyUi) window.__rebuildMyUi();
 
