@@ -152,7 +152,7 @@
     <div class="rail-pane on" data-pane="1">
       <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>People</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
       <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
         <select class="sync-style">
           <option value="banquet" selected>Banquet</option>
@@ -217,7 +217,7 @@
         <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
         <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
         <div class="rail-field" draggable="true" data-field="people">
-          <div class="tiny-lab">People</div>
+          <div class="tiny-lab">Guests</div>
           <div class="step">
             <button type="button" id="peopleMinus" aria-label="Fewer">−</button>
             <div class="n" id="peopleBig">—</div>
@@ -251,7 +251,7 @@
     <!-- UI4 RoboCab-lite approve -->
     <div class="rail-pane" data-pane="4">
       <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>People</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="rail-field" draggable="true" data-field="style">
         <div class="tiny-lab">Style</div>
@@ -341,6 +341,7 @@ const DOOR_KEEP_GUEST = 1.2;
 const FIRE_KEEP = 0.91;
 const SCREEN_FRONT = 2.8;
 // Banquet can sit closer to screens — toggle off the 2.8 m front keep
+const SEATS_PER_TABLE = 10;
 let screenKeepOn = false;
 function screenKeepDepth(){ return screenKeepOn ? SCREEN_FRONT : 0; }
 
@@ -396,10 +397,11 @@ function updateCounts(){
   const need = tablesNeeded();
   const p = parseInt(brief.people, 10);
   let text = '';
-  if (need && Number.isFinite(p)) {
-    text = n + ' tables · ' + p + ' pax → ' + need + ' needed (' + SEATS_PER_TABLE + '/tbl)';
+  if (Number.isFinite(p) && p > 0) {
+    text = 'Guests '+p+' · '+n+' tables';
+    if (need && n !== need) text += ' · need '+need;
   } else if (n) {
-    text = n + ' tables';
+    text = n + ' tables · Max PAX sets guests';
   }
   document.querySelectorAll('.tableCount').forEach(el=>{ el.textContent = text; });
 }
@@ -1129,8 +1131,10 @@ function settle(){
   }
   if (it.kind==='permanent'){
     yieldForPermanents(groupMembers(it));
-    if (liveMax){ pruneIllegalTables(); fillGapsHexOnce(); renumberTables(); setStatus('Live max · settled'); }
+    if (liveMax){ pruneIllegalTables(); fillGapsHexOnce(); renumberTables(); setGuestsFromTables(); setStatus('Live max · settled'); }
     else if (it.type!=='stage') setStatus('Settled');
+  } else if (it.kind==='move' && it.type==='round'){
+    renumberTables(); // keep # geography after shove
   }
   render();
 }
@@ -1163,17 +1167,28 @@ document.getElementById('addTable').onclick=()=>{
   if (!slot){ setStatus('No gap'); return; }
   seq++; items.push({ id:'t'+seq, kind:'move', type:'round', x:slot.x, z:slot.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
   const n=renumberTables();
-  render(); setStatus('Added · '+n+' tables');
+  render(); setStatus('Added · '+n+' tables · #1 top-left → #'+n+' bottom-right');
 };
 
 function renumberTables(){
+  // Geography: top→bottom rows, left→right within row. Highest # = bottom-right.
   const mov = items.filter(i=>i.kind==='move' && i.type==='round');
-  mov.sort((a,b)=> (b.z-a.z) || (a.x-b.x));
+  const rowTol = MIN_C2C * 0.45; // same visual row if z close
+  mov.sort((a,b)=>{
+    if (Math.abs(a.z-b.z) > rowTol) return b.z - a.z; // higher z (top of map) first
+    return a.x - b.x; // left → right
+  });
   mov.forEach((m,i)=>{ m.label=String(i+1); });
   seq = Math.max(seq, mov.length);
   return mov.length;
 }
-const SEATS_PER_TABLE = 10;
+function setGuestsFromTables(){
+  const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
+  const guests = n * SEATS_PER_TABLE;
+  brief.people = guests ? String(guests) : '';
+  applyBriefToDom();
+  return guests;
+}
 
 /** Build solids for packing: built-ins + permanents + locked round AABBs. */
 function packSolidsFromItems(){
@@ -1332,8 +1347,9 @@ function runMaxPax(){
   // Light check — drop any illegal (should be zero)
   pruneIllegalTables();
   const n=renumberTables();
+  const guests=setGuestsFromTables();
   render();
-  setStatus('Max PAX · '+n+' tables · ~'+(n*SEATS_PER_TABLE)+' pax');
+  setStatus('Max PAX · '+n+' tables · '+guests+' guests');
   return n;
 }
 
@@ -1348,7 +1364,7 @@ function wireSharedActions(){
         const t0=performance.now();
         const n=runMaxPax();
         const ms=Math.round(performance.now()-t0);
-        setStatus('Max PAX · '+n+' tables · ~'+(n*SEATS_PER_TABLE)+' pax · '+ms+'ms');
+        setStatus('Max PAX · '+n+' tables · '+(n*SEATS_PER_TABLE)+' guests · '+ms+'ms');
       } catch (err) {
         setStatus('Max PAX error · '+err);
         console.error(err);
