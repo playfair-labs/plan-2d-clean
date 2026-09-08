@@ -1440,7 +1440,7 @@ function render(){
     const stroke=it.id===selectedId?'#c9a227':'#6e6a64';
     const sw=it.id===selectedId?2:1.45;
     const inset=sw/2+0.8;
-    html+=`<rect x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" style="pointer-events:none"/>`;
+    html+=`<rect x="${x-w/2+sw/2}" y="${y-d/2+sw/2}" width="${Math.max(0,w-sw)}" height="${Math.max(0,d-sw)}" fill="none" stroke="${stroke}" stroke-width="${sw}" style="pointer-events:none"/>`;
     html+=`<clipPath id="stg-clip-${it.id}"><rect x="${x-w/2+inset}" y="${y-d/2+inset}" width="${Math.max(0,w-inset*2)}" height="${Math.max(0,d-inset*2)}"/></clipPath>`;
     html+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="650" fill="#5a5650" clip-path="url(#stg-clip-${it.id})" style="pointer-events:none">Stage</text>`;
   });
@@ -1448,7 +1448,8 @@ function render(){
     const x=sx(it.x), y=sy(it.z);
     const w=it.w*S, d=it.d*S;
     const stroke=it.id===selectedId?'#c9a227':'#8a6e2f';
-    html+=`<rect x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="none" stroke="${stroke}" stroke-width="${it.id===selectedId?2.6:1.15}" style="pointer-events:none"/>`;
+    const dsw=it.id===selectedId?2.2:1.15;
+    html+=`<rect x="${x-w/2+dsw/2}" y="${y-d/2+dsw/2}" width="${Math.max(0,w-dsw)}" height="${Math.max(0,d-dsw)}" fill="none" stroke="${stroke}" stroke-width="${dsw}" style="pointer-events:none"/>`;
   });
   const danceGroups={};
   items.filter(i=>i.type==='dance').forEach(it=>{
