@@ -1202,14 +1202,19 @@ function placeRoundTableAt(x, z, preferNear){
 }
 function fitPermanentIntoPerimeter(it){
   let cur={...it};
+  const lockSize = it.type==='stage' || it.type==='dance';
   for (let k=0;k<24;k++){
     if (isLegal(cur,{ignoreMove:true})) return cur;
     const pushed=pushOutSelf(cur,{ignoreMove:true});
-    if (pushed) return pushed;
+    if (pushed){
+      if (!lockSize || (pushed.w===it.w && pushed.d===it.d)) return pushed;
+    }
+    if (lockSize) break; // hire tiles keep size — snapAttachDeck places them
     cur.w=Math.max(0.35, cur.w*0.94);
     cur.d=Math.max(0.35, cur.d*0.94);
   }
   clampIntoRoom(cur);
+  if (lockSize){ cur.w=it.w; cur.d=it.d; }
   return cur;
 }
 
@@ -1433,7 +1438,7 @@ function render(){
     const x=sx(it.x), y=sy(it.z);
     const w=it.w*S, d=it.d*S;
     const stroke=it.id===selectedId?'#c9a227':'#6e6a64';
-    const sw=it.id===selectedId?1.8:1.2;
+    const sw=it.id===selectedId?2:1.45;
     const inset=sw/2+0.8;
     html+=`<rect x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" style="pointer-events:none"/>`;
     html+=`<clipPath id="stg-clip-${it.id}"><rect x="${x-w/2+inset}" y="${y-d/2+inset}" width="${Math.max(0,w-inset*2)}" height="${Math.max(0,d-inset*2)}"/></clipPath>`;
@@ -2182,11 +2187,13 @@ function stampKitAt(kind, x, z){
   if (kind==='stage'){
     stageSeq++;
     it = makeStageDeck('stage'+stageSeq, x, z);
+    snapStageDeck(it);
     it = fitPermanentIntoPerimeter(it);
     snapStageDeck(it);
   } else if (kind==='dance'){
     danceSeq++;
     it = makeDanceTile('dance'+danceSeq, x, z);
+    snapDanceTile(it);
     it = fitPermanentIntoPerimeter(it);
     snapDanceTile(it);
   } else {
@@ -2511,7 +2518,7 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,snapAttachDeck,attachGapFor,STAGE_DECK,STAGE_GAP,DANCE_GAP,canPlaceKitOnSurface,isPlaceableKitType};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,snapStageDeck,snapAttachDeck,attachGapFor,STAGE_DECK,STAGE_GAP,DANCE_GAP,stampKitAt,canPlaceKitOnSurface,isPlaceableKitType};
 fillKitHosts();
 wireSharedActions();
 bindBrief();

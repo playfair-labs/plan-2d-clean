@@ -17,6 +17,7 @@ assert.ok(!/for \(const m of groupMembers\(it\)\)\{\s*if \(it\.type==='stage'\) 
 assert.ok(/items\.push\(it\);\n  if \(kind==='stage'\) recomputeStageGroups\(\);\n  else if \(kind==='dance'\) recomputeDanceGroups\(\);/.test(html), 'group after the new tile is in items');
 assert.ok(/same-type stage\/dance sit on the tile gap/.test(html), 'PAD does not block same-type attach');
 assert.ok(/Drop-on-tile \(rightmost column overlap\)/.test(html), 'overlap on a column still snaps out');
+assert.ok(/lockSize = it\.type==='stage' \|\| it\.type==='dance'/.test(html), 'fit does not shrink stage/dance hire size');
 assert.ok(/function canPlaceKitOnSurface\(/.test(html), 'kit drop on stage/dance');
 assert.ok(/function isPlaceableKitType\(/.test(html), 'placeable kit types');
 assert.ok(/canPlaceKitOnSurface\(placeKit, surface\)/.test(html), 'hits on stage/dance stamp kit');

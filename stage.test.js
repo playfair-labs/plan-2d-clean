@@ -15,6 +15,7 @@ assert.ok(/type==='stage' \? STAGE_GAP/.test(html), 'stage uses STAGE_GAP');
 assert.ok(/Rigid group snap/.test(html), 'rigid group snap');
 assert.ok(/if \(it\.type==='stage'\) snapStageDeck\(it\);/.test(html), 'settle snaps stage group once');
 assert.ok(/same-type stage\/dance sit on the tile gap/.test(html), 'PAD skipped between stage decks');
+assert.ok(/lockSize = it\.type==='stage' \|\| it\.type==='dance'/.test(html), 'fit keeps stage hire size');
 assert.ok(/it\.type==='stage' \|\| it\.type==='dance'/.test(html) && /overlap\(me, aabb\(o\)\)/.test(html), 'true overlap still illegal');
 
 assert.ok(!/y-d\/2\+11/.test(html), 'Stage label is not pinned to the top edge');
