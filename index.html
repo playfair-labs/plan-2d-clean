@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
-<meta name="plan2d-build" content="t644" />
+<meta name="plan2d-build" content="t646" />
 <style>
   :root {
     --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
@@ -223,6 +223,21 @@
     font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--accent); padding: 2px 2px 6px;
   }
+
+  .guests-max {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;
+  }
+  .guests-max .gm-half { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .guests-max .gm-max .fixed {
+    color: var(--accent); font-weight: 800; text-align: center;
+  }
+  .guests-max.over .gm-max .fixed {
+    color: #e07070; border-color: #6a3030; background: #2a1818;
+  }
+  .guests-warn {
+    grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: #e07070;
+    line-height: 1.3; min-height: 0;
+  }
 </style>
 </head>
 <body>
@@ -247,7 +262,13 @@
           <option value="theatre">Theatre</option>
         </select>
       </div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people">
+        <div class="guests-max">
+          <div class="gm-half"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="—" /></div>
+          <div class="gm-half gm-max"><label>Max</label><div class="fixed sync-max">—</div></div>
+          <div class="guests-warn sync-guest-warn" hidden></div>
+        </div>
+      </div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
@@ -264,7 +285,13 @@
     <!-- UI2 Plain action rows -->
     <div class="rail-pane" data-pane="2">
       <div class="act-row rail-field" draggable="true" data-field="date"><div class="q">Day of event</div><input class="sync-date" type="date" /></div>
-      <div class="act-row rail-field" draggable="true" data-field="people"><div class="q">How many guests</div><input class="sync-people" type="number" min="1" step="1" placeholder="Number" /></div>
+      <div class="act-row rail-field" draggable="true" data-field="people">
+        <div class="guests-max">
+          <div class="gm-half"><div class="q">Guests</div><input class="sync-people" type="number" min="1" step="1" placeholder="Number" /></div>
+          <div class="gm-half gm-max"><div class="q">Max</div><div class="fixed sync-max">—</div></div>
+          <div class="guests-warn sync-guest-warn" hidden></div>
+        </div>
+      </div>
       <div class="act-row rail-field" draggable="true" data-field="style"><div class="q">Table layout</div>
         <select class="sync-style">
           <option value="banquet" selected>Banquet</option>
@@ -299,13 +326,19 @@
         <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
         <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
         <div class="rail-field" draggable="true" data-field="people">
-          <div class="tiny-lab">Guests</div>
-          <div class="step">
-            <button type="button" id="peopleMinus" aria-label="Fewer">−</button>
-            <div class="n" id="peopleBig">—</div>
-            <button type="button" id="peoplePlus" aria-label="More">+</button>
+          <div class="guests-max">
+            <div class="gm-half">
+              <div class="tiny-lab">Guests</div>
+              <div class="step">
+                <button type="button" id="peopleMinus" aria-label="Fewer">−</button>
+                <div class="n" id="peopleBig">—</div>
+                <button type="button" id="peoplePlus" aria-label="More">+</button>
+              </div>
+              <input class="sync-people" type="hidden" value="" />
+            </div>
+            <div class="gm-half gm-max"><div class="tiny-lab">Max</div><div class="fixed sync-max">—</div></div>
+            <div class="guests-warn sync-guest-warn" hidden></div>
           </div>
-          <input class="sync-people" type="hidden" value="" />
         </div>
         <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
           <select class="sync-style">
@@ -337,7 +370,13 @@
     <!-- UI4 RoboCab-lite approve -->
     <div class="rail-pane" data-pane="4">
       <div class="door rail-field" draggable="true" data-field="client"><label>Client</label><input class="sync-client" type="text" placeholder="Name" autocomplete="off" /></div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people">
+        <div class="guests-max">
+          <div class="gm-half"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="—" /></div>
+          <div class="gm-half gm-max"><label>Max</label><div class="fixed sync-max">—</div></div>
+          <div class="guests-warn sync-guest-warn" hidden></div>
+        </div>
+      </div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
         <select class="sync-style">
@@ -385,7 +424,13 @@
           <option value="theatre">Theatre</option>
         </select>
       </div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people">
+        <div class="guests-max">
+          <div class="gm-half"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="—" /></div>
+          <div class="gm-half gm-max"><label>Max</label><div class="fixed sync-max">—</div></div>
+          <div class="guests-warn sync-guest-warn" hidden></div>
+        </div>
+      </div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
@@ -417,7 +462,13 @@
           <option value="theatre">Theatre</option>
         </select>
       </div>
-      <div class="door rail-field" draggable="true" data-field="people"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="Guests" /></div>
+      <div class="door rail-field" draggable="true" data-field="people">
+        <div class="guests-max">
+          <div class="gm-half"><label>Guests</label><input class="sync-people" type="number" min="1" step="1" placeholder="—" /></div>
+          <div class="gm-half gm-max"><label>Max</label><div class="fixed sync-max">—</div></div>
+          <div class="guests-warn sync-guest-warn" hidden></div>
+        </div>
+      </div>
       <div class="door rail-field" draggable="true" data-field="date"><label>Date</label><input class="sync-date" type="date" /></div>
       <div class="door rail-field" draggable="true" data-field="room"><label>Room</label><div class="fixed">Grand</div></div>
       <details class="add-wrap kit-details"><summary>Add…</summary><div class="kit-pop" data-kit-host></div></details>
@@ -432,7 +483,7 @@
     </div>
 
     <div class="rail-mapdock" aria-label="Map tools">
-      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t644</div>
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t646</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
@@ -557,21 +608,57 @@ function tablesNeeded(){
   if (!Number.isFinite(p) || p < 1) return 0;
   return Math.ceil(p / SEATS_PER_TABLE);
 }
+let _floorMaxCache = { key:'', tables:0, guests:0 };
+function floorConfigKey(){
+  const bits = items.filter(i=>i.kind==='permanent' || isLocked(i)).map(i =>
+    [i.type, i.x.toFixed(2), i.z.toFixed(2), (i.w||0).toFixed(2), (i.d||0).toFixed(2), i.locked?1:0, i.group||''].join(':')
+  );
+  return bits.join('|') + '|sk'+(screenKeepOn?1:0);
+}
+/** Max banquet guests for current stage/dance/AV/locks — dry pack, no map change. */
+function computeFloorMax(){
+  const key = floorConfigKey();
+  if (_floorMaxCache.key === key) return _floorMaxCache;
+  const solids = packSolidsFromItems();
+  const locked = items.filter(i=>i.type==='round' && isLocked(i)).map(t=>({x:t.x,z:t.z}));
+  const placed = packHexSync(solids, locked, {
+    gapStep: screenKeepOn ? 0.4 : 0.28,
+    target: screenKeepOn ? 14 : 24
+  });
+  const tables = locked.length + placed.length;
+  _floorMaxCache = { key, tables, guests: tables * SEATS_PER_TABLE };
+  return _floorMaxCache;
+}
+function invalidateFloorMax(){ _floorMaxCache = { key:'', tables:0, guests:0 }; }
 function updateCounts(){
   const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
   const need = tablesNeeded();
   const p = parseInt(brief.people, 10);
+  const floor = computeFloorMax();
+  const maxG = floor.guests;
   let text = '';
   if (Number.isFinite(p) && p > 0) {
     text = 'Guests '+p+' · '+n+' tables';
     if (need && n !== need) text += ' · need '+need;
+    if (maxG && p > maxG) text += ' · over max '+maxG;
   } else if (n) {
     text = n + ' tables · Max PAX sets guests';
   }
   document.querySelectorAll('.tableCount').forEach(el=>{ el.textContent = text; });
+  document.querySelectorAll('.sync-max').forEach(el=>{ el.textContent = maxG ? String(maxG) : '—'; });
+  const over = Number.isFinite(p) && p > 0 && maxG > 0 && p > maxG;
+  const warn = over
+    ? ('Can\'t fit '+p+' · max '+maxG+' ('+floor.tables+' tables) in this layout')
+    : '';
+  document.querySelectorAll('.sync-guest-warn').forEach(el=>{
+    if (warn){ el.hidden = false; el.textContent = warn; }
+    else { el.hidden = true; el.textContent = ''; }
+  });
+  document.querySelectorAll('.guests-max').forEach(el=>{ el.classList.toggle('over', !!over); });
 }
 /** Match unlocked banquet tables to ceil(people/10). Adds when guests rise; trims unlocked extras when guests fall. Locks + permanents untouched. */
 function syncTablesToPeople(){
+  invalidateFloorMax();
   // Guests acts like Max PAX: dense-pack up to ceil(guests/10)
   const need = tablesNeeded();
   const p = parseInt(brief.people, 10);
@@ -593,8 +680,14 @@ function syncTablesToPeople(){
   pruneIllegalTables();
   const n = renumberTables();
   render();
-  if (n < need) setStatus(p+' guests need '+need+' tables · floor fit '+n);
-  else setStatus(p+' guests · '+n+' tables packed');
+  const floor = computeFloorMax();
+  if (n < need){
+    setStatus(p+' guests need '+need+' tables · only '+n+' fit · max '+floor.guests);
+  } else if (floor.guests && p > floor.guests){
+    setStatus('Over max · '+p+' guests asked · floor max '+floor.guests);
+  } else {
+    setStatus(p+' guests · '+n+' tables packed');
+  }
 }
 
 const KIT_ITEMS = [
@@ -1399,6 +1492,7 @@ function settle(){
   if (it.type==='stage'){
     for (const m of groupMembers(it)) snapStageDeck(m);
     recomputeStageGroups();
+    invalidateFloorMax();
     const joined=groupMembers(items.find(x=>x.id===it.id)||it).length;
     setStatus(joined>1 ? ('Stage snapped · '+joined+' decks move as one') : 'Stage deck');
   }
@@ -1605,6 +1699,7 @@ function addUntilFull(){
 }
 
 function runMaxPax(){
+  invalidateFloorMax();
   const kept=items.filter(i=>i.kind==='permanent' || isLocked(i));
   items=kept.slice();
   const solids=packSolidsFromItems();
@@ -1705,6 +1800,7 @@ function nextStageAnchor(){
   return { x:right.x + deckPitch, z:right.z };
 }
 function stampKitAt(kind, x, z){
+  invalidateFloorMax();
   const def=KIT_DEFS[kind];
   if (!def) return;
   seq++;
