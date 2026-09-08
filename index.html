@@ -156,6 +156,12 @@
       <div class="door rail-field" draggable="true" data-field="style"><label>Style</label>
         <select class="sync-style">
           <option value="banquet" selected>Banquet</option>
+          <option value="banquet-s1">Banquet · 1 stage</option>
+          <option value="banquet-s2">Banquet · 2 stage</option>
+          <option value="banquet-s3">Banquet · 3 stage</option>
+          <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+          <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+          <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
           <option value="cabaret">Cabaret</option>
           <option value="classroom">Classroom</option>
           <option value="theatre">Theatre</option>
@@ -180,6 +186,12 @@
       <div class="act-row rail-field" draggable="true" data-field="style"><div class="q">Table layout</div>
         <select class="sync-style">
           <option value="banquet" selected>Banquet</option>
+          <option value="banquet-s1">Banquet · 1 stage</option>
+          <option value="banquet-s2">Banquet · 2 stage</option>
+          <option value="banquet-s3">Banquet · 3 stage</option>
+          <option value="banquet-s1-dance">Banquet · 1 stage + dance</option>
+          <option value="banquet-s2-dance">Banquet · 2 stage + dance</option>
+          <option value="banquet-s3-dance">Banquet · 3 stage + dance</option>
           <option value="cabaret">Cabaret</option>
           <option value="classroom">Classroom</option>
           <option value="theatre">Theatre</option>
@@ -367,8 +379,8 @@ const brief = { client:'', date:'', people:'', style:'banquet' };
 let uiMode = 1;
 let liveMax = false;
 let placeKit = null;
-let seq = 4;
-let stageSeq = 3;
+let seq = 0;
+let stageSeq = 0;
 let selectedId = null;
 
 function setStatus(t){
@@ -450,15 +462,8 @@ function makeStageDeck(id, x, z){
 const STAGE_Z = 1.6;
 const STAGE_GAP = 0.02;
 const deckPitch = STAGE_DECK.w + STAGE_GAP;
-let items = [
-  makeStageDeck('stage1', -deckPitch, STAGE_Z),
-  makeStageDeck('stage2', 0, STAGE_Z),
-  makeStageDeck('stage3', deckPitch, STAGE_Z),
-  { id:'t1', kind:'move', type:'round', x:-8, z:-2.2, w:TABLE_D, d:TABLE_D, label:'1', locked:false },
-  { id:'t2', kind:'move', type:'round', x:-4, z:-2.2, w:TABLE_D, d:TABLE_D, label:'2', locked:false },
-  { id:'t3', kind:'move', type:'round', x:0, z:-2.5, w:TABLE_D, d:TABLE_D, label:'3', locked:false },
-  { id:'t4', kind:'move', type:'round', x:4, z:-2.2, w:TABLE_D, d:TABLE_D, label:'4', locked:false },
-];
+let items = []; // empty room — place stage/dance via Style (Banquet · …)
+
 
 function isLocked(it){ return !!it.locked; }
 function packableMove(){ return items.filter(i=>i.kind==='move' && !isLocked(i)); }
@@ -1452,6 +1457,46 @@ function applyBriefToDom(){
   });
   updateCounts();
 }
+
+/** Big stuff first: Style → Banquet / with 1–3 stage / + dance. Replaces stage+dance only; tables stay. */
+function parseBanquetStyle(val){
+  const m = String(val||'').match(/^banquet(?:-s([123]))?(-dance)?$/);
+  if (!m) return null;
+  return { stages: m[1] ? Number(m[1]) : 0, dance: !!m[2] };
+}
+function applyBanquetBigStuff(styleVal){
+  const spec = parseBanquetStyle(styleVal);
+  if (!spec){
+    // cabaret/classroom/theatre — leave map; just record style
+    return;
+  }
+  // Strip prior stage + dance only
+  items = items.filter(i => i.type !== 'stage' && i.type !== 'dance');
+  stageSeq = 0;
+  if (spec.stages > 0){
+    const n = spec.stages;
+    const startX = -((n - 1) / 2) * deckPitch;
+    for (let i=0;i<n;i++){
+      stageSeq++;
+      items.push(makeStageDeck('stage'+stageSeq, startX + i*deckPitch, STAGE_Z));
+    }
+  }
+  if (spec.dance){
+    // Dance in open floor below stage/screens
+    items.push({
+      id:'dance1', kind:'permanent', type:'dance',
+      x:0, z:-2.2, w:DANCE_FLOOR.w, d:DANCE_FLOOR.d,
+      label:'Dance', locked:false
+    });
+  }
+  if (typeof recomputeStageGroups === 'function') recomputeStageGroups();
+  const bits=[];
+  if (spec.stages) bits.push(spec.stages+' stage');
+  if (spec.dance) bits.push('dance');
+  setStatus(bits.length ? ('Banquet · '+bits.join(' + ')) : 'Banquet · empty (add stage/dance in Style)');
+  render();
+}
+
 function bindBrief(){
   document.querySelectorAll('.sync-client').forEach(el=>{
     el.addEventListener('input', ()=>{ brief.client=el.value; applyBriefToDom(); });
@@ -1467,7 +1512,11 @@ function bindBrief(){
     el.addEventListener('change', onPeople);
   });
   document.querySelectorAll('select.sync-style').forEach(el=>{
-    el.addEventListener('change', ()=>{ brief.style=el.value; applyBriefToDom(); });
+    el.addEventListener('change', ()=>{
+      brief.style=el.value;
+      applyBriefToDom();
+      applyBanquetBigStuff(brief.style);
+    });
   });
   document.getElementById('peopleMinus').onclick=()=>{
     const n=Math.max(1, (parseInt(brief.people,10)||0)-10);
@@ -1478,7 +1527,11 @@ function bindBrief(){
     brief.people=String(n); applyBriefToDom(); syncTablesToPeople();
   };
   document.querySelectorAll('#styleSeg [data-style], #styleChips [data-style]').forEach(b=>{
-    b.addEventListener('click', ()=>{ brief.style=b.dataset.style; applyBriefToDom(); });
+    b.addEventListener('click', ()=>{
+      brief.style=b.dataset.style;
+      applyBriefToDom();
+      applyBanquetBigStuff(brief.style);
+    });
   });
 }
 function setUi(mode){
