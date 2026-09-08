@@ -1247,7 +1247,8 @@ function packLightPolish(rounds, solids, lockedCount, iters){
 function packHexSync(solids, locked, opts){
   const box=packUsableBox();
   const gapStep=(opts && opts.gapStep) || 0.4;
-  const target=(opts && opts.target) != null ? opts.target : 14;
+  // Soft floor only — never early-stop; Screen keep off frees the front strip for more tables
+  const target=(opts && opts.target) != null ? opts.target : (screenKeepOn ? 14 : 20);
   let best=[];
   if (!locked.length){
     const rounds=[];
@@ -1255,8 +1256,10 @@ function packHexSync(solids, locked, opts){
     packGapFill(rounds, solids, box, [0.28,0.16,0.1], true);
     packLightPolish(rounds, solids, 0, 12);
     packGapFill(rounds, solids, box, [0.1,0.07], false);
+    // Extra fine fill when screen keep is off — that 2.8 m strip becomes usable
+    if (!screenKeepOn) packGapFill(rounds, solids, box, [0.12,0.08,0.06], true);
     best=rounds.map(t=>({x:t.x,z:t.z}));
-    if (best.length>=target) return best;
+    // Do NOT return early at target — keep searching denser layouts below
   }
   const configs=[{pitch:2.92,div:8},{pitch:MIN_C2C,div:6}];
   let bestRounds=locked.map(t=>({x:t.x,z:t.z}));
@@ -1321,7 +1324,7 @@ function runMaxPax(){
   items=kept.slice();
   const solids=packSolidsFromItems();
   const locked=kept.filter(i=>i.type==='round' && isLocked(i)).map(t=>({x:t.x,z:t.z}));
-  const placed=packHexSync(solids, locked, { gapStep:0.4, target:14 });
+  const placed=packHexSync(solids, locked, { gapStep: screenKeepOn ? 0.4 : 0.28, target: screenKeepOn ? 14 : 22 });
   for (const p of placed){
     seq++;
     items.push({ id:'t'+seq, kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
@@ -1365,7 +1368,9 @@ document.querySelectorAll('.screenKeepBtn').forEach(b=>{
     screenKeepOn = !screenKeepOn;
     sync();
     render();
-    setStatus(screenKeepOn ? 'Screen keep on · 2.8 m' : 'Screen keep off · banquet closer');
+    setStatus(screenKeepOn
+      ? 'Screen keep on · 2.8 m'
+      : 'Screen keep off · banquet closer — hit Max PAX again to fill the strip');
   };
   sync();
 });
