@@ -23,7 +23,7 @@
   }
   .top strong { font-size:14px; letter-spacing:.05em; font-weight:700; }
   .ui-tog { display:flex; gap:2px; align-items:center; }
-  .sec .ui-tog button { height:28px; padding:0 8px; font-size:11px; }
+  .rail-mapdock .ui-tog button { height:28px; padding:0 8px; font-size:11px; }
   .ui-tog button {
     background:transparent; color:var(--muted); border:1px solid transparent;
     border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer;
@@ -115,11 +115,30 @@
   .status-line { margin-top:auto; font-size:14px; color:var(--accent); min-height:1.2em; line-height:1.35; }
   .count { font-size:15px; color:var(--muted); font-weight:650; }
   .mapwrap { flex:1; min-width:0; display:flex; flex-direction:column; background:var(--mapbg); }
-  .sec {
-    display:flex; flex-wrap:wrap; gap:2px 4px; align-items:center;
-    padding:4px 8px; border-bottom:1px solid var(--line); background:#141311; flex-shrink:0;
+  .sec { display:none; }
+  .rail-mapdock {
+    margin-top:auto; flex-shrink:0; padding-top:10px;
+    border-top:1px solid var(--line);
+    display:flex; flex-direction:column; gap:8px;
   }
-  .sec .sep { width:1px; height:12px; background:var(--line); margin:0 4px; }
+  .rail-mapdock .map-acts {
+    display:flex; flex-wrap:wrap; gap:3px;
+  }
+  .rail-mapdock .map-acts button {
+    background:transparent; color:#b8b4ac; border:1px solid transparent;
+    border-radius:8px; padding:8px 10px; font-size:13px; font-weight:600;
+    cursor:pointer;
+  }
+  .rail-mapdock .map-acts button:hover {
+    background:var(--soft); border-color:var(--line); color:var(--ink);
+  }
+  .rail-mapdock .map-acts .sep { width:1px; height:18px; background:var(--line); margin:0 2px; align-self:center; }
+  .rail-mapdock .zoom-bar {
+    display:flex; gap:6px; align-items:center; justify-content:flex-start;
+    padding:0;
+  }
+  .rail-mapdock .ui-tog { flex-wrap:wrap; }
+  .rail-mapdock .ui-tog button { height:28px; padding:0 8px; font-size:11px; }
   .stage {
     flex:1; min-height:0; display:flex; align-items:stretch; justify-content:stretch;
     padding:0; overflow:hidden;
@@ -128,7 +147,6 @@
     background:#e8e2d8; border-radius:0; touch-action:none;
     width:100%; height:100%; display:block;
   }
-  .zoom-bar { display:flex; gap:6px; align-items:center; padding:6px 10px; justify-content:flex-end; flex-shrink:0; }
   .zoom-bar button { width:36px; height:32px; border-radius:8px; border:1px solid #3a3834; background:#242220; color:var(--ink); font-weight:800; font-size:16px; line-height:1; cursor:pointer; }
   .zoom-bar span { color:var(--muted); font-size:11px; min-width:3.5em; text-align:center; }
 
@@ -347,17 +365,8 @@
       <div class="count tableCount"></div>
       <div class="status-line status"></div>
     </div>
-  </aside>
 
-  <div class="mapwrap">
-    <div class="sec" aria-label="Tools">
-      <button type="button" id="addTable">Add table</button>
-      <button type="button" id="tidyRowsBtn">Tidy rows</button>
-      <button type="button" id="tidyStaggerBtn">Tidy staggered</button>
-      <button type="button" id="shuffleBtn">Shuffle</button>
-      <span class="sep"></span>
-      <button type="button" id="deleteBtn">Delete</button>
-      <span class="sep"></span>
+    <div class="rail-mapdock" aria-label="Map tools">
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
@@ -365,12 +374,23 @@
         <button type="button" data-ui="4">UI 4</button>
         <button type="button" data-ui="5">My UI</button>
       </div>
+      <div class="map-acts">
+        <button type="button" id="addTable">Add table</button>
+        <button type="button" id="tidyRowsBtn">Tidy rows</button>
+        <button type="button" id="tidyStaggerBtn">Tidy staggered</button>
+        <button type="button" id="shuffleBtn">Shuffle</button>
+        <span class="sep"></span>
+        <button type="button" id="deleteBtn">Delete</button>
+      </div>
+      <div class="zoom-bar">
+        <button type="button" id="zoomOut" title="Zoom out">−</button>
+        <span id="zoomPct">100%</span>
+        <button type="button" id="zoomIn" title="Zoom in">+</button>
+      </div>
     </div>
-    <div class="zoom-bar">
-      <button type="button" id="zoomOut" title="Zoom out">−</button>
-      <span id="zoomPct">100%</span>
-      <button type="button" id="zoomIn" title="Zoom in">+</button>
-    </div>
+  </aside>
+
+  <div class="mapwrap">
     <div class="stage">
       <svg id="plan" viewBox="0 0 960 620" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <g id="world"></g>
@@ -801,6 +821,36 @@ function findFreeSlot(w,d,exceptId){
   }
   return null;
 }
+/** Prefer exact click, then nudge/spiral near it — same legality as Add table button. */
+function findFreeSlotNear(x0, z0, maxR){
+  if (maxR == null) maxR = 3.2;
+  const tryAt=(x,z)=>{
+    const cand={ id:'tmpNear', kind:'move', type:'round', x, z, w:TABLE_D, d:TABLE_D, label:'', locked:false };
+    return isLegal(cand) ? {x,z} : null;
+  };
+  const hit0=tryAt(x0,z0);
+  if (hit0) return hit0;
+  const pushed=pushOutSelf({ id:'tmpNear', kind:'move', type:'round', x:x0, z:z0, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+  if (pushed) return {x:pushed.x, z:pushed.z};
+  const step=0.18;
+  for (let r=step; r<=maxR+1e-9; r+=step){
+    const n = Math.max(12, Math.round(24 * r));
+    for (let i=0; i<n; i++){
+      const a = (i / n) * Math.PI * 2;
+      const hit=tryAt(x0 + Math.cos(a)*r, z0 + Math.sin(a)*r);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+function placeRoundTableAt(x, z, preferNear){
+  let slot = preferNear ? findFreeSlotNear(x, z) : null;
+  if (!slot) slot = findFreeSlot(TABLE_D, TABLE_D);
+  if (!slot) return null;
+  seq++;
+  items.push({ id:'t'+seq, kind:'move', type:'round', x:slot.x, z:slot.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+  return renumberTables();
+}
 function fitPermanentIntoPerimeter(it){
   let cur={...it};
   for (let k=0;k<24;k++){
@@ -999,9 +1049,11 @@ function render(){
       html+=lockMark;
     } else if (it.type==='stage'){
       const w=it.w*S, d=it.d*S;
-      const stroke=it.id===selectedId?'#c9a227':'#111';
-      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#d4d4d4" stroke="${stroke}" stroke-width="${it.id===selectedId?2.8:1.4}" style="cursor:grab"/>`;
-      html+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#222" style="pointer-events:none">Stage</text>`;
+      // Pin-thin segment outline (not heavy black); label under the deck so lectern never covers it
+      const stroke=it.id===selectedId?'#c9a227':'#8a8680';
+      const sw=it.id===selectedId?1.05:0.4;
+      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#d4d4d4" stroke="${stroke}" stroke-width="${sw}" style="cursor:grab"/>`;
+      html+=`<text x="${x}" y="${y+d/2+11}" text-anchor="middle" font-size="9" font-weight="650" fill="#6a6660" style="pointer-events:none">Stage</text>`;
       html+=lockMark;
     } else if (it.type==='lectern'){
       // Parramatta plan-2d trap glyph; label ABOVE (not across body)
@@ -1227,10 +1279,8 @@ window.addEventListener('keydown', (e)=>{
   e.preventDefault(); deleteSelected();
 });
 document.getElementById('addTable').onclick=()=>{
-  const slot=findFreeSlot(TABLE_D,TABLE_D);
-  if (!slot){ setStatus('No gap'); return; }
-  seq++; items.push({ id:'t'+seq, kind:'move', type:'round', x:slot.x, z:slot.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
-  const n=renumberTables();
+  const n=placeRoundTableAt(0, 0, false);
+  if (!n){ setStatus('No gap'); return; }
   render(); setStatus('Added · '+n+' tables · #1 top-left → #'+n+' bottom-right');
 };
 
@@ -1846,11 +1896,8 @@ refreshStyleSelects();
         b.onclick=()=>{
           hide();
           if (k.kind==='table'){
-            const cand={ id:'tmp', kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false };
-            if (!isLegal(cand)){ setStatus('No room for table here'); return; }
-            seq++;
-            items.push({ id:'t'+seq, kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
-            const n=renumberTables();
+            const n=placeRoundTableAt(p.x, p.z, true);
+            if (!n){ setStatus('No room for table here'); return; }
             render();
             setStatus('Table added · '+n+' tables');
             return;
