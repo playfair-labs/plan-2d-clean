@@ -172,7 +172,7 @@
       <div class="rail-tools">
         <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
         <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
-        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="true">Screen keep · on</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
         <button type="button" class="quiet-btn clearBtn">Clear room</button>
       </div>
       <div class="count tableCount"></div>
@@ -203,7 +203,7 @@
       <div class="rail-tools">
         <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
         <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
-        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="true">Screen keep · on</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
         <button type="button" class="quiet-btn clearBtn">Clear room</button>
       </div>
       <div class="count tableCount"></div>
@@ -241,7 +241,7 @@
       <div class="rail-tools">
         <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
         <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
-        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="true">Screen keep · on</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
         <button type="button" class="quiet-btn clearBtn">Clear room</button>
       </div>
       <div class="count tableCount"></div>
@@ -271,7 +271,7 @@
       <div class="rail-tools">
         <button type="button" class="quiet-btn liveMaxBtn">Live max</button>
         <button type="button" class="quiet-btn maxPackBtn">Max PAX</button>
-        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="true">Screen keep · on</button>
+        <button type="button" class="quiet-btn screenKeepBtn" aria-pressed="false">Screen keep · off</button>
         <button type="button" class="quiet-btn clearBtn">Clear room</button>
       </div>
       <div class="count tableCount"></div>
@@ -341,7 +341,7 @@ const DOOR_KEEP_GUEST = 1.2;
 const FIRE_KEEP = 0.91;
 const SCREEN_FRONT = 2.8;
 // Banquet can sit closer to screens — toggle off the 2.8 m front keep
-let screenKeepOn = true;
+let screenKeepOn = false;
 function screenKeepDepth(){ return screenKeepOn ? SCREEN_FRONT : 0; }
 
 // Parramatta hire sizes (READ ONLY reference)
