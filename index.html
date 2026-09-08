@@ -149,6 +149,8 @@
     padding:8px 10px; border-radius:8px; cursor:pointer;
   }
   .ctx-menu button:hover { background:var(--soft); }
+  .ctx-menu .sec-lab { padding:8px 10px 2px; color:#8a8680; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
+  .ctx-menu .sec-lab:first-child { padding-top:4px; }
 </style>
 </head>
 <body>
@@ -1603,10 +1605,23 @@ bindBrief();
 (function mapAddContextMenu(){
   let menu=null;
   function hide(){ if(menu){ menu.remove(); menu=null; } }
+  // Short grouped list — not a grocery dump
+  const GROUPS = [
+    { lab:'Tables', items:[ { kind:'table', label:'Table' } ] },
+    { lab:'Stage & floor', items:[
+      { kind:'stage', label:'Stage deck' },
+      { kind:'dance', label:'Dance floor' },
+    ]},
+    { lab:'AV', items:[
+      { kind:'lectern', label:'Lectern' },
+      { kind:'light', label:'Lighting tree' },
+      { kind:'speaker', label:'Speaker' },
+      { kind:'foldback', label:'Foldback' },
+    ]},
+  ];
   document.addEventListener('click', hide);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
-    // Don't steal item hit context if any future per-item menu; empty map / background = Add
     if (e.target.closest && e.target.closest('.hit')) return;
     hide();
     const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
@@ -1614,38 +1629,36 @@ bindBrief();
     menu.className = 'ctx-menu';
     menu.style.left = e.clientX+'px';
     menu.style.top = e.clientY+'px';
-    const title=document.createElement('div');
-    title.style.cssText='padding:6px 10px 4px;color:#8a8680;font-size:11px;font-weight:700;';
-    title.textContent='Add here';
-    menu.appendChild(title);
-    KIT_ITEMS.forEach(k=>{
-      const b=document.createElement('button');
-      b.type='button';
-      b.textContent=k.label;
-      b.onclick=()=>{
-        hide();
-        stampKitAt(k.kind, p.x, p.z);
-      };
-      menu.appendChild(b);
+    GROUPS.forEach(g=>{
+      const lab=document.createElement('div');
+      lab.className='sec-lab';
+      lab.textContent=g.lab;
+      menu.appendChild(lab);
+      g.items.forEach(k=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.textContent=k.label;
+        b.onclick=()=>{
+          hide();
+          if (k.kind==='table'){
+            const cand={ id:'tmp', kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false };
+            if (!isLegal(cand)){ setStatus('No room for table here'); return; }
+            seq++;
+            items.push({ id:'t'+seq, kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
+            const n=renumberTables();
+            render();
+            setStatus('Table added · '+n+' tables');
+            return;
+          }
+          stampKitAt(k.kind, p.x, p.z);
+        };
+        menu.appendChild(b);
+      });
     });
-    // also allow add table at point
-    const tb=document.createElement('button');
-    tb.type='button';
-    tb.textContent='Table';
-    tb.onclick=()=>{
-      hide();
-      const cand={ id:'tmp', kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false };
-      if (!isLegal(cand)){ setStatus('No room for table here'); return; }
-      seq++;
-      items.push({ id:'t'+seq, kind:'move', type:'round', x:p.x, z:p.z, w:TABLE_D, d:TABLE_D, label:'', locked:false });
-      const n=renumberTables();
-      render();
-      setStatus('Table added · '+n+' tables');
-    };
-    menu.appendChild(tb);
     document.body.appendChild(menu);
   });
 })();
+
 
 
 applyBriefToDom();
