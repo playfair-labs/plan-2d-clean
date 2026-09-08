@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
-<meta name="plan2d-build" content="t642" />
+<meta name="plan2d-build" content="t644" />
 <style>
   :root {
     --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
@@ -206,6 +206,10 @@
     font-size: 11px !important; font-weight: 800 !important; cursor: pointer !important;
   }
   .field-type button.on { border-color: #c9a227 !important; color: #c9a227 !important; }
+  .field-type .px {
+    min-width: 2.1em; text-align: center; font-size: 12px !important; font-weight: 800 !important;
+    color: var(--accent) !important; line-height: 26px; padding: 0 2px; user-select: none;
+  }
 
   .build-big {
     margin-top: 10px; padding: 10px 12px; border-radius: 10px;
@@ -428,7 +432,7 @@
     </div>
 
     <div class="rail-mapdock" aria-label="Map tools">
-      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t642</div>
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t644</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
@@ -1204,27 +1208,116 @@ function snapStageDeck(it){
   it.x=best.x; it.z=best.z;
   return true;
 }
+function stageUnderLectern(lec){
+  return items.find(st => st.type==='stage'
+    && Math.abs(lec.x - st.x) <= st.w/2 + 0.05
+    && Math.abs(lec.z - st.z) <= st.d/2 + 0.05) || null;
+}
 function groupMembers(it){
   if (it.type==='stage'){
-    recomputeStageGroups();
-    if (!it.group) return [it];
-    return items.filter(o=>o.type==='stage' && o.group===it.group);
+    const stages = !it.group ? [it] : items.filter(o=>o.type==='stage' && o.group===it.group);
+    const g = it.group;
+    const lects = items.filter(o=>{
+      if (o.type!=='lectern' || !o.locked) return false;
+      if (g && o.group===g) return true;
+      if (!g && stageUnderLectern(o) && stageUnderLectern(o).id===it.id) return true;
+      return false;
+    });
+    return stages.concat(lects);
   }
   if (!it.group) return [it];
   return items.filter(o=>o.group===it.group);
 }
 function toggleLock(it){
-  const members=groupMembers(it);
+  // Stages/tables: lock in place. Lectern uses Lock/Unlock menu (ties to stage).
+  if (it.type==='lectern'){
+    if (it.locked) unlockLectern(it);
+    else lockLectern(it);
+    return;
+  }
+  const members=groupMembers(it).filter(m=>m.type!=='lectern');
   const next=!it.locked;
   members.forEach(m=>{ m.locked=next; });
   setStatus(next ? 'Locked · pack designs around' : 'Unlocked');
   render();
 }
+function lockLectern(it){
+  const st = stageUnderLectern(it);
+  it.locked = true;
+  if (st){
+    if (!st.group){
+      const gid = 'sg'+Date.now().toString(36);
+      // join flush decks into one group
+      const mates = items.filter(o=>o.type==='stage' && (
+        o.id===st.id || (o.group && o.group===st.group)
+      ));
+      // Prefer existing group on neighbouring joined decks
+      recomputeStageGroups();
+      const st2 = items.find(x=>x.id===st.id) || st;
+      if (!st2.group){
+        st2.group = gid;
+        // pull flush neighbours already grouped by recompute — call again after assign
+        items.filter(o=>o.type==='stage' && decksFlush(o, st2)).forEach(o=>{ o.group = gid; });
+        recomputeStageGroups();
+      }
+      const st3 = items.find(x=>x.id===st.id) || st2;
+      it.group = st3.group || gid;
+      if (!st3.group) st3.group = it.group;
+    } else {
+      it.group = st.group;
+    }
+    setStatus('Lectern locked to stage');
+  } else {
+    it.group = null;
+    setStatus('Lectern locked in place · place on stage to ride with it');
+  }
+  render();
+}
+function unlockLectern(it){
+  it.locked = false;
+  it.group = null;
+  setStatus('Lectern unlocked');
+  render();
+}
+let itemCtxMenu = null;
+function hideItemCtxMenu(){
+  if (itemCtxMenu){ itemCtxMenu.remove(); itemCtxMenu=null; }
+}
+function showLecternLockMenu(clientX, clientY, it){
+  hideItemCtxMenu();
+  const menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.style.left = clientX+'px';
+  menu.style.top = clientY+'px';
+  const lab = document.createElement('div');
+  lab.className = 'sec-lab';
+  lab.textContent = 'Lectern';
+  menu.appendChild(lab);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
+  b.onclick = ()=>{
+    hideItemCtxMenu();
+    if (it.locked) unlockLectern(it);
+    else lockLectern(it);
+  };
+  menu.appendChild(b);
+  document.body.appendChild(menu);
+  itemCtxMenu = menu;
+}
 function onContextLock(evt){
-  // Right-click is Add menu only — never delete/lock here. Do not stopPropagation.
-  evt.preventDefault();
+  const id = evt.currentTarget && evt.currentTarget.dataset && evt.currentTarget.dataset.id;
+  const it = id && items.find(x=>x.id===id);
+  if (it && it.type==='lectern'){
+    evt.preventDefault();
+    evt.stopPropagation();
+    showLecternLockMenu(evt.clientX, evt.clientY, it);
+    return;
+  }
+  // Other objects: let map Add menu handle right-click
 }
 function onDown(evt){
+
   if (placeKit) return;
   if (evt.button===2) return; // right-click handled by contextmenu
   evt.preventDefault(); evt.stopPropagation();
@@ -1754,6 +1847,8 @@ function saveBanquetStandard(){
     });
     const boldBtn = el.querySelector('.field-type [data-act="bold"]');
     if (boldBtn) boldBtn.classList.toggle('on', !!st.bold);
+    const pxEl = el.querySelector('.field-type .px');
+    if (pxEl) pxEl.textContent = String(px);
   }
   function ensureChip(el){
     if (el.querySelector(':scope > .field-type')) return;
@@ -1761,6 +1856,7 @@ function saveBanquetStandard(){
     chip.className = 'field-type';
     chip.title = 'Type for this row — prototype';
     chip.innerHTML = '<button type="button" data-act="down">A−</button>'
+      + '<span class="px" aria-label="Font size">13</span>'
       + '<button type="button" data-act="up">A+</button>'
       + '<button type="button" data-act="bold">B</button>';
     chip.addEventListener('mousedown', e=>e.stopPropagation());
@@ -1932,6 +2028,7 @@ refreshStyleSelects();
     ]},
   ];
   document.addEventListener('click', hide);
+  document.addEventListener('click', hideItemCtxMenu);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
     // Right-click anywhere on map = Add / Templates menu (never delete)
