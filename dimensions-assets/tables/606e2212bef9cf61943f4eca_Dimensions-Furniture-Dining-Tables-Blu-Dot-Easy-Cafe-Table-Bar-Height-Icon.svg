@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+]>
+<svg version="1.1" xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="750px" height="750px"
+	 viewBox="0 0 750 750" enable-background="new 0 0 750 750" xml:space="preserve">
+<metadata>
+	<sfw  xmlns="&ns_sfw;">
+		<slices></slices>
+		<sliceSourceBounds  bottomLeftOrigin="true" height="10096.903" width="4262" x="-2000" y="-1314"></sliceSourceBounds>
+	</sfw>
+</metadata>
+<g id="FILL-BACKGROUND">
+	<rect y="0" fill="#FFFFFF" width="750" height="750"/>
+</g>
+<g id="N-DIMENSIONS">
+</g>
+<g id="N-TEXT">
+</g>
+<g id="_x32_D_x24_AG-DIAGRAM">
+	<g id="POLYLINE_344_">
+		<g>
+			<g>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="218.258" y1="634.094" x2="220.258" y2="634.094"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3.9299,6.8774" x1="227.136" y1="634.094" x2="526.303" y2="634.094"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="529.742" y1="634.094" x2="531.742" y2="634.094"/>
+			</g>
+		</g>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-DETAILS-DIAGRAM">
+</g>
+<g id="_x32_D_x24_AG-DETAILS">
+	<g id="POLYLINE_119_">
+		
+			<line fill="none" stroke="#1B7FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="186.68" y1="139.753" x2="563.32" y2="139.753"/>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-FURNITURE">
+	<g id="POLYLINE_195_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M306.605,149.169l1.893,1.695h21.665l16.696,14.945c14.027,0,42.256,0,56.28,0l16.696-14.945h21.665l1.893-1.695H306.605z"/>
+	</g>
+	<g id="POLYLINE_194_">
+		
+			<polygon fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+			563.32,139.753 544.611,149.169 205.389,149.169 186.68,139.753 186.68,131.906 563.32,131.906 		"/>
+	</g>
+	<g id="POLYLINE_193_">
+		
+			<rect x="461.146" y="630.842" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="12.555" height="3.252"/>
+	</g>
+	<g id="POLYLINE_192_">
+		
+			<rect x="368.723" y="630.842" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="12.555" height="3.252"/>
+	</g>
+	<g id="POLYLINE_191_">
+		
+			<rect x="276.299" y="630.842" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="12.555" height="3.252"/>
+	</g>
+	<g id="POLYLINE_190_">
+		
+			<rect x="265.147" y="624.565" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="219.707" height="6.277"/>
+	</g>
+	<g id="POLYLINE_189_">
+		
+			<rect x="354.599" y="165.809" fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" width="40.803" height="458.756"/>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-OUTLINE">
+	<g id="POLYLINE_33_">
+		
+			<polygon fill="none" stroke="#1B7FFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+			288.854,630.842 288.854,634.094 276.299,634.094 276.299,630.842 265.147,630.842 265.147,624.565 354.599,624.565 
+			354.599,165.809 346.86,165.809 330.164,150.864 308.499,150.864 306.605,149.169 205.389,149.169 186.68,139.753 186.68,131.906 
+			563.32,131.906 563.32,139.753 544.611,149.169 443.395,149.169 441.501,150.864 419.836,150.864 403.14,165.809 395.401,165.809 
+			395.401,624.565 484.853,624.565 484.853,630.842 473.701,630.842 473.701,634.094 461.146,634.094 461.146,630.842 
+			381.277,630.842 381.277,634.094 368.723,634.094 368.723,630.842 		"/>
+	</g>
+</g>
+</svg>
