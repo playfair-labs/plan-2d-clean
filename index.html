@@ -1447,10 +1447,13 @@ function placeMarkHtml(it, x, y){
     html+=`<circle cx="${x+w*0.08}" cy="${y}" r="${Math.min(w,d)*0.14}" fill="#6a4a32" stroke="#3a3328" stroke-width="0.8" ${pe}/>`;
     html+=`<circle cx="${x-w*0.38}" cy="${y+d*0.38}" r="2.2" fill="#2c2a26" ${pe}/>`;
     html+=`<circle cx="${x+w*0.38}" cy="${y+d*0.38}" r="2.2" fill="#2c2a26" ${pe}/>`;
-  } else if (it.type==='trestle' || it.type==='avops'){
+  } else if (it.type==='trestle'){
     html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
     const lab=kitLabel(it);
-    if (lab) html+=`<text x="${x}" y="${y+3}" text-anchor="middle" font-size="${it.type==='avops'?7:8}" font-weight="650" fill="#3a3328" ${pe}>${lab}</text>`;
+    if (lab) html+=`<text x="${x}" y="${y+3}" text-anchor="middle" font-size="8" font-weight="650" fill="#3a3328" ${pe}>${lab}</text>`;
+  } else if (it.type==='avops'){
+    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
+    html+=`<text x="${x}" y="${y-d/2-5}" text-anchor="middle" font-size="9" font-weight="700" fill="#1a1612" ${pe}>AV OPS Desk</text>`;
   } else if (it.type==='tub'){
     const sw2=w*0.78, sd=d*0.72;
     const pts=[
@@ -1668,7 +1671,7 @@ function snapDanceTile(it){
 }
 function snapAvopsDesk(it){
   if (it.type!=='avops') return false;
-  const SNAP=0.36;
+  const SNAP=0.55;
   const others=items.filter(o=>o.type==='avops' && o.id!==it.id);
   let best=null, bestDist=SNAP;
   for (const o of others){
@@ -2785,6 +2788,22 @@ function placeMenuIcon(kind){
     };
     host.appendChild(b);
   }
+  function pinMenu(el, clientX, clientY){
+    el.style.left = clientX+'px';
+    el.style.top = clientY+'px';
+    const r = el.getBoundingClientRect();
+    let x = clientX, y = clientY;
+    if (r.right > window.innerWidth - 8) x = Math.max(8, window.innerWidth - r.width - 8);
+    if (r.bottom > window.innerHeight - 8) y = Math.max(8, window.innerHeight - r.height - 8);
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+  }
+  function drapeChooserIcon(kind){
+    const svg = (inner)=>'<svg class="ctx-ico" viewBox="0 0 18 18" aria-hidden="true">'+inner+'</svg>';
+    if (kind==='avops-left') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 14 q 2-2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
+    if (kind==='avops-right') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 4 q 2 2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
+    return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/>');
+  }
   function fillAvopsChooser(host, p){
     host.innerHTML='';
     const lab=document.createElement('div');
@@ -2798,10 +2817,11 @@ function placeMenuIcon(kind){
     ].forEach(k=>{
       const b=document.createElement('button');
       b.type='button';
-      b.textContent=k.label;
+      b.innerHTML = drapeChooserIcon(k.kind)+'<span>'+k.label+'</span>';
       b.onclick=(ev)=>{ ev.stopPropagation(); hide(); stampKitAt(k.kind, p.x, p.z); };
       host.appendChild(b);
     });
+    pinMenu(host, parseFloat(host.style.left)||0, parseFloat(host.style.top)||0);
   }
   document.addEventListener('click', hide);
   document.addEventListener('click', hideItemCtxMenu);
@@ -2814,8 +2834,8 @@ function placeMenuIcon(kind){
     const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
     menu = document.createElement('div');
     menu.className = 'ctx-menu';
-    menu.style.left = e.clientX+'px';
-    menu.style.top = e.clientY+'px';
+    menu.addEventListener('click', ev=>ev.stopPropagation());
+    menu.addEventListener('contextmenu', ev=>ev.preventDefault());
     GROUPS.forEach(g=>{
       const lab=document.createElement('div');
       lab.className='sec-lab';
@@ -2847,6 +2867,7 @@ function placeMenuIcon(kind){
       menu.appendChild(b);
     });
     document.body.appendChild(menu);
+    pinMenu(menu, e.clientX, e.clientY);
   });
 })();
 
