@@ -2,6 +2,7 @@
 /**
  * Column keep: BEST_SEED graze at (-5.5637, 2.3098) sat 1.445 m from col2
  * (BODY_R+PAD = 1.44). Chair-ring / yellow body must not be legal there.
+ * t657: right-click Delete gone; left Delete + Add menu still skip hits.
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -10,9 +11,11 @@ const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 assert.ok(/const HOLE_KEEP = 0\.2/.test(html), 'HOLE_KEEP set');
 assert.ok(/function holeSolids\(/.test(html), 'holeSolids helper');
 assert.ok(/holeSolids\(\)\.forEach/.test(html), 'solids use holeSolids');
-assert.ok(/function onItemContextMenu\(/.test(html), 'item context menu');
+assert.ok(/function onItemContextMenu\(/.test(html), 'item context menu (lectern lock only)');
 assert.ok(/deleteSelected\(\)/.test(html), 'deleteSelected reused');
-assert.ok(/el\.addEventListener\('contextmenu', onItemContextMenu\)/.test(html), 'hits wire Delete menu');
+assert.ok(/el\.addEventListener\('contextmenu', onItemContextMenu\)/.test(html), 'hits wire context (no Delete)');
+assert.ok(!/del\.textContent = 'Delete'/.test(html), 'no right-click Delete');
+assert.ok(/id="deleteBtn" class="delete-big"/.test(html), 'left Delete is the only delete control');
 assert.ok(/if \(e\.target\.closest && e\.target\.closest\('\.hit'\)\) return;/.test(html), 'Add menu skips hits');
 
 const HOLES = [
