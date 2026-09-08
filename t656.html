@@ -174,6 +174,8 @@
   .ctx-menu button:hover { background:var(--soft); }
   .ctx-menu .sec-lab { padding:8px 10px 2px; color:#8a8680; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
   .ctx-menu .sec-lab:first-child { padding-top:4px; }
+  .chair-hit { cursor:pointer; }
+  .chair-hit:hover { stroke:#c9a227; stroke-width:1.4; }
 
   /* Prototype: type chips ON each left-rail row (Al: knobs on the thing) */
   .rail { width: min(400px, 48vw) !important; min-width: 320px !important; }
@@ -613,6 +615,17 @@ const HOLES = [
   { id:'col1', x:2.8, z:-0.16, w:0.85, d:0.85 },
   { id:'col2', x:-5.19, z:0.44, w:0.85, d:0.85 },
 ];
+/** Extra keep around built-in columns so chair-ring BODY never kisses a pillar (BEST_SEED graze). */
+const HOLE_KEEP = 0.2;
+function holeSolids(){
+  return HOLES.map(h => ({
+    x: h.x - h.w/2 - HOLE_KEEP,
+    z: h.z - h.d/2 - HOLE_KEEP,
+    w: h.w + 2*HOLE_KEEP,
+    d: h.d + 2*HOLE_KEEP,
+    kind: 'column'
+  }));
+}
 const DOORS = [
   { kind:'guest', a:[11.94,-5.68], b:[10.14,-5.68] },
   { kind:'guest', a:[7.24,-5.68], b:[5.44,-5.68] },
@@ -648,6 +661,16 @@ const FIRE_KEEP = 0.91;
 const SCREEN_FRONT = 2.8;
 // Banquet can sit closer to screens — toggle off the 2.8 m front keep
 const SEATS_PER_TABLE = 10;
+function removedSeatsOf(it){
+  return (it && Array.isArray(it.removedSeats)) ? it.removedSeats : [];
+}
+function effectiveSeats(it){
+  if (!it || it.type!=='round') return 0;
+  return Math.max(0, SEATS_PER_TABLE - removedSeatsOf(it).length);
+}
+function roomSeats(){
+  return items.filter(i=>i.type==='round').reduce((s,i)=>s+effectiveSeats(i), 0);
+}
 let screenKeepOn = false;
 function screenKeepDepth(){ return screenKeepOn ? SCREEN_FRONT : 0; }
 
@@ -773,6 +796,12 @@ function syncTablesToPeople(){
   const need = tablesNeeded();
   const p = parseInt(brief.people, 10);
   if (!need){ updateCounts(); return; }
+  // Chair-delete drops people by 1 but must not rebuild / yank the parent table.
+  const have = items.filter(i=>i.type==='round').length;
+  if (have === need && roomSeats() === p){
+    updateCounts();
+    return;
+  }
   const kept = items.filter(i=>i.kind==='permanent' || isLocked(i));
   items = kept.slice();
   const solids = packSolidsFromItems();
@@ -907,7 +936,7 @@ function clampIntoRoom(it){
 }
 function solidsFor(it, opts={}){
   const out=[];
-  HOLES.forEach(h => out.push({ x:h.x-h.w/2, z:h.z-h.d/2, w:h.w, d:h.d }));
+  holeSolids().forEach(b => out.push(b));
   doorKeepBoxes().forEach(b => out.push(b));
   // Screen keep: strip SCREEN_FRONT into room from each bar (banquet)
   SCREENS.forEach(s => {
@@ -1062,7 +1091,16 @@ function untangleTables(){
   }
   pruneIllegalTables();
 }
+function nudgeIllegalTables(){
+  const mov=items.filter(i=>i.kind==='move' && i.type==='round' && !isLocked(i));
+  for (const m of mov){
+    if (isLegal(m)) continue;
+    const pushed=pushOutSelf(m);
+    if (pushed){ m.x=pushed.x; m.z=pushed.z; }
+  }
+}
 function pruneIllegalTables(){
+  nudgeIllegalTables();
   const kept=[];
   for (const it of items){
     if (it.kind==='move' && it.type==='round' && !isLocked(it) && !isLegal(it)) continue;
@@ -1303,14 +1341,16 @@ function render(){
     if (it.type==='round'){
       const r=it.w*S/2;
       const bodyR=BODY_D*S/2;
-      for (let i=0;i<10;i++){
-        const a=i*Math.PI/5;
-        const cx=x+Math.cos(a)*(bodyR-6), cy=y+Math.sin(a)*(bodyR-6);
-        html+=`<rect x="${cx-4}" y="${cy-4.5}" width="8" height="9" rx="1.5" fill="#cfc6b8" stroke="#5c564c" stroke-width="0.8" transform="rotate(${a*180/Math.PI} ${cx} ${cy})"/>`;
-      }
+      const gone=removedSeatsOf(it);
       html+=`<circle class="hit" data-id="${it.id}" cx="${x}" cy="${y}" r="${bodyR}" fill="transparent" style="cursor:grab"/>`;
       html+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#d7cbb8" stroke="#5c564c" stroke-width="1" style="pointer-events:none"/>`;
       html+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="600" fill="#3a3834" style="pointer-events:none">${it.label}</text>`;
+      for (let i=0;i<SEATS_PER_TABLE;i++){
+        if (gone.indexOf(i)>=0) continue;
+        const a=i*Math.PI/5;
+        const cx=x+Math.cos(a)*(bodyR-6), cy=y+Math.sin(a)*(bodyR-6);
+        html+=`<rect class="hit chair-hit" data-id="${it.id}" data-seat="${i}" x="${cx-7}" y="${cy-8}" width="14" height="16" rx="2" fill="#cfc6b8" stroke="#5c564c" stroke-width="0.8" transform="rotate(${a*180/Math.PI} ${cx} ${cy})"/>`;
+      }
       if (it.id===selectedId) html+=`<circle cx="${x}" cy="${y}" r="${bodyR+3}" fill="none" stroke="#c9a227" stroke-width="2.4" style="pointer-events:none"/>`;
       html+=lockMark;
     } else if (it.type==='dance'){
@@ -1352,7 +1392,7 @@ function render(){
   world.innerHTML=html;
   world.querySelectorAll('.hit').forEach(el=>{
     el.addEventListener('pointerdown', onDown);
-    el.addEventListener('contextmenu', onContextLock);
+    el.addEventListener('contextmenu', onItemContextMenu);
   });
   svg.style.cursor = placeKit ? 'crosshair' : '';
 }
@@ -1488,38 +1528,50 @@ let itemCtxMenu = null;
 function hideItemCtxMenu(){
   if (itemCtxMenu){ itemCtxMenu.remove(); itemCtxMenu=null; }
 }
-function showLecternLockMenu(clientX, clientY, it){
+function showItemContextMenu(clientX, clientY, it, seat){
   hideItemCtxMenu();
   const menu = document.createElement('div');
   menu.className = 'ctx-menu';
   menu.style.left = clientX+'px';
   menu.style.top = clientY+'px';
-  const lab = document.createElement('div');
-  lab.className = 'sec-lab';
-  lab.textContent = 'Lectern';
-  menu.appendChild(lab);
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
-  b.onclick = ()=>{
+  if (it.type==='lectern' && seat==null){
+    const lab = document.createElement('div');
+    lab.className = 'sec-lab';
+    lab.textContent = 'Lectern';
+    menu.appendChild(lab);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
+    b.onclick = ()=>{
+      hideItemCtxMenu();
+      if (it.locked) unlockLectern(it);
+      else lockLectern(it);
+    };
+    menu.appendChild(b);
+  }
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.textContent = 'Delete';
+  del.onclick = ()=>{
     hideItemCtxMenu();
-    if (it.locked) unlockLectern(it);
-    else lockLectern(it);
+    if (seat!=null) deleteSeat(it, seat);
+    else { selectedId = it.id; deleteSelected(); }
   };
-  menu.appendChild(b);
+  menu.appendChild(del);
   document.body.appendChild(menu);
   itemCtxMenu = menu;
 }
-function onContextLock(evt){
+function onItemContextMenu(evt){
   const id = evt.currentTarget && evt.currentTarget.dataset && evt.currentTarget.dataset.id;
   const it = id && items.find(x=>x.id===id);
-  if (it && it.type==='lectern'){
-    evt.preventDefault();
-    evt.stopPropagation();
-    showLecternLockMenu(evt.clientX, evt.clientY, it);
-    return;
-  }
-  // Other objects: let map Add menu handle right-click
+  if (!it) return;
+  evt.preventDefault();
+  evt.stopPropagation();
+  const seatRaw = evt.currentTarget.dataset.seat;
+  const seat = seatRaw!=null && seatRaw!=='' ? Number(seatRaw) : null;
+  selectedId = it.id;
+  render();
+  showItemContextMenu(evt.clientX, evt.clientY, it, Number.isFinite(seat) ? seat : null);
 }
 function onDown(evt){
 
@@ -1547,8 +1599,21 @@ function onDown(evt){
     _cx:startX, _cy:startY, _sx:startX, _sy:startY,
   };
   render();
-  const el=world.querySelector('.hit[data-id="'+id+'"]');
+  const el=world.querySelector('.hit[data-id="'+id+'"]:not([data-seat])') || world.querySelector('.hit[data-id="'+id+'"]');
   if (el) el.setPointerCapture(evt.pointerId);
+}
+function deleteSeat(it, seat){
+  if (!it || it.type!=='round') return;
+  const idx = Number(seat);
+  if (!Number.isFinite(idx) || idx<0 || idx>=SEATS_PER_TABLE) return;
+  const cur = removedSeatsOf(it).slice();
+  if (cur.indexOf(idx)>=0) return;
+  cur.push(idx);
+  it.removedSeats = cur;
+  brief.people = String(roomSeats());
+  applyBriefToDom();
+  render();
+  setStatus('Chair deleted · '+brief.people+' guests · table stays');
 }
 function deleteSelected(){
   invalidateFloorMax();
@@ -1692,8 +1757,7 @@ function renumberTables(){
   return mov.length;
 }
 function setGuestsFromTables(){
-  const n = items.filter(i=>i.kind==='move'&&i.type==='round').length;
-  const guests = n * SEATS_PER_TABLE;
+  const guests = roomSeats();
   brief.people = guests ? String(guests) : '';
   applyBriefToDom();
   return guests;
@@ -1702,7 +1766,7 @@ function setGuestsFromTables(){
 /** Build solids for packing: built-ins + permanents + locked round AABBs. */
 function packSolidsFromItems(){
   const out=[];
-  HOLES.forEach(h => out.push({ x:h.x-h.w/2, z:h.z-h.d/2, w:h.w, d:h.d }));
+  holeSolids().forEach(b => out.push(b));
   doorKeepBoxes().forEach(b => out.push(b));
   SCREENS.forEach(s => {
     out.push({ x:s.x-s.w/2, z:s.z-s.d/2, w:s.w, d:s.d });
@@ -2006,7 +2070,8 @@ function saveStandards(list){ localStorage.setItem(STD_KEY, JSON.stringify(list)
 function snapshotStandardItems(){
   return items.map(i=>({
     id:i.id, kind:i.kind, type:i.type, x:i.x, z:i.z, w:i.w, d:i.d,
-    label:i.label||'', locked:!!i.locked, group:i.group||null
+    label:i.label||'', locked:!!i.locked, group:i.group||null,
+    removedSeats: Array.isArray(i.removedSeats) ? i.removedSeats.slice() : []
   }));
 }
 function applyStandardSnapshot(std){
@@ -2210,6 +2275,8 @@ function applyBanquetBigStuff(styleVal){
   const bits=[];
   if (spec.stages) bits.push(spec.stages+' stage');
   if (spec.dance) bits.push('dance');
+  yieldForPermanents(items.filter(i => i.type==='stage' || i.type==='dance'));
+  untangleTables();
   setStatus(bits.length ? ('Banquet · '+bits.join(' + ')) : 'Banquet · empty (add stage/dance in Style)');
   render();
 }
@@ -2261,7 +2328,7 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf};
 fillKitHosts();
 wireSharedActions();
 bindBrief();
@@ -2288,8 +2355,10 @@ refreshStyleSelects();
   document.addEventListener('click', hideItemCtxMenu);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
-    // Right-click anywhere on map = Add / Templates menu (never delete)
+    if (e.target.closest && e.target.closest('.hit')) return;
+    // Empty map: Add / Templates. Item hits use onItemContextMenu → deleteSelected.
     hide();
+    hideItemCtxMenu();
     const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
     menu = document.createElement('div');
     menu.className = 'ctx-menu';
