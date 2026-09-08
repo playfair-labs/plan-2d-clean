@@ -186,6 +186,7 @@
     text-transform:uppercase; cursor:pointer;
   }
   .delete-big:hover { background:#e03a3a; }
+  .delete-big:disabled { opacity:0.38; cursor:default; background:#7a3030; }
 
   /* Prototype: type chips ON each left-rail row (Al: knobs on the thing) */
   .rail { width: min(400px, 48vw) !important; min-width: 320px !important; }
@@ -1378,7 +1379,7 @@ function render(){
         const a=i*Math.PI/5;
         const cx=x+Math.cos(a)*(bodyR-6), cy=y+Math.sin(a)*(bodyR-6);
         const chairSel = it.id===selectedId && selectedSeat===i;
-        html+=`<rect class="hit chair-hit${chairSel?' chair-sel':''}" data-id="${it.id}" data-seat="${i}" x="${cx-7}" y="${cy-8}" width="14" height="16" rx="2" fill="#cfc6b8" stroke="${chairSel?'#c9a227':'#5c564c'}" stroke-width="${chairSel?2.2:0.8}" transform="rotate(${a*180/Math.PI} ${cx} ${cy})"/>`;
+        html+=`<rect class="hit chair-hit${chairSel?' chair-sel':''}" data-id="${it.id}" data-seat="${i}" x="${cx-8}" y="${cy-9}" width="16" height="18" rx="2" fill="${chairSel?'#c9a227':'#cfc6b8'}" stroke="${chairSel?'#6a4e00':'#5c564c'}" stroke-width="${chairSel?2.4:0.8}" transform="rotate(${a*180/Math.PI} ${cx} ${cy})"/>`;
       }
       if (it.id===selectedId) html+=`<circle cx="${x}" cy="${y}" r="${bodyR+3}" fill="none" stroke="#c9a227" stroke-width="2.4" style="pointer-events:none"/>`;
       html+=lockMark;
@@ -1433,6 +1434,22 @@ function render(){
     el.addEventListener('contextmenu', onItemContextMenu);
   });
   svg.style.cursor = placeKit ? 'crosshair' : '';
+  syncDeleteButton();
+}
+function deleteButtonLabel(){
+  const it=items.find(x=>x.id===selectedId);
+  if (!it) return 'Delete';
+  if (it.type==='round' && selectedSeat!=null) return 'Delete chair';
+  if (it.type==='round') return 'Delete table';
+  if (it.type==='dance') return 'Delete tile';
+  if (it.type==='stage') return 'Delete deck';
+  return 'Delete';
+}
+function syncDeleteButton(){
+  const btn=document.getElementById('deleteBtn');
+  if (!btn) return;
+  btn.textContent = deleteButtonLabel();
+  btn.disabled = !selectedId;
 }
 
 let drag=null;
@@ -1635,17 +1652,26 @@ function onDown(evt){
   // Nested select: click table once; click again on a chair to select that chair
   const seatRaw=evt.currentTarget.dataset.seat;
   const clickedSeat=seatRaw!=null && seatRaw!=='' ? Number(seatRaw) : null;
-  if (it.type==='round' && Number.isFinite(clickedSeat)){
+  const fromChair = it.type==='round' && Number.isFinite(clickedSeat);
+  if (fromChair){
     if (selectedId===id) selectedSeat=clickedSeat;
     else { selectedId=id; selectedSeat=null; }
   } else {
     selectedId=id;
     selectedSeat=null;
   }
+  // Chair clicks are select-only (no drag) so nested select cannot be confused with a grab
+  if (fromChair){
+    render();
+    if (selectedSeat!=null) setStatus('Chair selected · left Delete removes this chair');
+    else setStatus('Table '+(it.label||'')+' selected · click a chair to pick it');
+    return;
+  }
   const p=fromSvg(svgPoint(evt).x, svgPoint(evt).y);
   const members=groupMembers(it);
   // long-press lock (touch / trackpad)
   clearTimeout(longPressTimer);
+  try { evt.currentTarget.setPointerCapture(evt.pointerId); } catch (err) {}
   const startX=evt.clientX, startY=evt.clientY;
   longPressTimer=setTimeout(()=>{
     if (!drag) return;
@@ -1661,7 +1687,7 @@ function onDown(evt){
   };
   render();
   const el=world.querySelector('.hit[data-id="'+id+'"]:not([data-seat])') || world.querySelector('.hit[data-id="'+id+'"]');
-  if (el) el.setPointerCapture(evt.pointerId);
+  if (el) { try { el.setPointerCapture(evt.pointerId); } catch (err) {} }
 }
 function deleteSeat(it, seat){
   if (!it || it.type!=='round') return;

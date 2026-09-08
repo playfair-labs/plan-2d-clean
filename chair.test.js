@@ -13,6 +13,8 @@ assert.ok(/if \(selectedId===id\) selectedSeat=clickedSeat/.test(html), 'second 
 assert.ok(/if \(it && it\.type==='round' && selectedSeat!=null\)/.test(html), 'left Delete reads nested chair');
 assert.ok(/deleteSeat\(it, selectedSeat\)/.test(html), 'left Delete on chair calls deleteSeat');
 assert.ok(/id="deleteBtn" class="delete-big"/.test(html), 'big left Delete button');
+assert.ok(/function deleteButtonLabel\(/.test(html), 'Delete label tracks nested select');
+assert.ok(/return 'Delete chair'/.test(html), 'button says Delete chair when seat nested');
 assert.ok(!/del\.textContent = 'Delete'/.test(html), 'no context-menu Delete');
 assert.ok(!/if \(e\.key!=='Backspace' && e\.key!=='Delete'\)/.test(html), 'keyboard Delete removed');
 assert.ok(/removedSeats/.test(html), 'removedSeats persisted');
