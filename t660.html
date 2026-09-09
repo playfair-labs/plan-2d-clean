@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — Grand</title>
-<meta name="plan2d-build" content="t658" />
+<meta name="plan2d-build" content="t660" />
 <meta name="plan2d-sync" content="" />
 <style>
   :root {
@@ -162,17 +162,16 @@
   .myui-hint { color:var(--muted); font-size:12px; line-height:1.35; padding:6px 2px 10px; }
   .myui-hint strong { color:var(--ink); font-weight:700; }
   .ctx-menu {
-    position:fixed; z-index:50; min-width:220px; max-height:min(80vh, 640px); overflow:auto; padding:4px;
+    position:fixed; z-index:50; min-width:180px; padding:4px;
     background:#2a2825; border:1px solid var(--line); border-radius:10px;
     box-shadow:0 8px 24px rgba(0,0,0,.35);
   }
   .ctx-menu button {
-    display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:0; background:transparent;
+    display:block; width:100%; text-align:left; border:0; background:transparent;
     color:var(--ink); font:inherit; font-size:13px; font-weight:600;
     padding:8px 10px; border-radius:8px; cursor:pointer;
   }
   .ctx-menu button:hover { background:var(--soft); }
-  .ctx-ico { width:18px; height:18px; flex-shrink:0; display:block; }
   .ctx-menu .sec-lab { padding:8px 10px 2px; color:#8a8680; font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; }
   .ctx-menu .sec-lab:first-child { padding-top:4px; }
   .chair-hit { cursor:pointer; }
@@ -586,7 +585,7 @@
     </div>
 
     <div class="rail-mapdock" aria-label="Map tools">
-      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t658</div>
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t660</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
@@ -698,19 +697,6 @@ const DANCE_TILE = { w:1, d:1 };
 const FOLDBACK = { w:0.5, d:0.4 };
 const SPEAKER = { w:0.42, d:0.42 };
 const LIGHT_TREE = { w:0.55, d:0.55 };
-/** AU 6×2.5 ft trestle — this repo had no trestle size (Al TBD exact mm). */
-const TRESTLE = { w:1.83, d:0.76 };
-/** Hire stair for 2.4×1.8 decks — 1200 mm wide, two–three risers. */
-const STAGE_STEPS = { w:1.2, d:0.8 };
-/** Mobile espresso cart (AU event hire typical). */
-const COFFEE_CART = { w:1.6, d:0.7 };
-/** Club / tub lounge chair. */
-const TUB_CHAIR = { w:0.75, d:0.7 };
-const STOOL = { w:0.4, d:0.4 };
-/** Wedding cake / coffee / cocktail high-top. */
-const SMALL_TABLE = { w:0.6, d:0.6 };
-/** Squiggle sits just outside the trestle long edge (Parramatta USITT drape). */
-const DRAPE_OFF = 0.07;
 
 const OX = 480, OY = 310, S = 26;
 function sx(x){ return OX + x * S; }
@@ -863,23 +849,11 @@ function syncTablesToPeople(){
 
 const KIT_ITEMS = [
   { kind:'lectern', label:'Lectern' },
-  { kind:'foldback', label:'Foldback monitor' },
+  { kind:'foldback', label:'Foldback' },
   { kind:'speaker', label:'Speaker' },
-  { kind:'light', label:'LX tree' },
+  { kind:'light', label:'Lighting tree' },
   { kind:'stage', label:'Stage deck' },
   { kind:'dance', label:'Dance floor' },
-  { kind:'steps', label:'Stage steps' },
-  { kind:'coffeecart', label:'Coffee cart' },
-  { kind:'trestle', label:'Trestle table' },
-  { kind:'trestle-water', label:'Water station' },
-  { kind:'trestle-reg', label:'Registration desk' },
-  { kind:'trestle-expo', label:'Expo stand' },
-  { kind:'avops', label:'AV OPS Desk' },
-  { kind:'avops-left', label:'AV OPS Desk · left edge' },
-  { kind:'avops-right', label:'AV OPS Desk · right edge' },
-  { kind:'tub', label:'Tub chair' },
-  { kind:'stool', label:'Stool' },
-  { kind:'smalltable', label:'Small table' },
 ];
 function fillKitHosts(){
   document.querySelectorAll('[data-kit-host]').forEach(host=>{
@@ -998,7 +972,6 @@ function solidsFor(it, opts={}){
     if (o.id===it.id) return;
     if (opts.ignoreMove && o.kind==='move' && !isLocked(o)) return;
     if (it.group && o.group && it.group===o.group) return;
-    if (opts.ignoreAvops && o.type==='avops') return;
     // Lectern / AV kit may sit on stage or dance floor
     if (canStackOnSurface(it, o)) return;
     // t660: same-type stage/dance sit on the tile gap — not a PAD solid
@@ -1375,131 +1348,8 @@ function kitLabel(it){
   if (it.type==='lectern') return 'Lectern';
   if (it.type==='foldback') return 'FB';
   if (it.type==='speaker') return 'Spk';
-  if (it.type==='light') return 'LX';
-  if (it.type==='steps') return 'Steps';
-  if (it.type==='coffeecart') return 'Coffee';
-  if (it.type==='trestle') return it.label||'';
-  if (it.type==='avops') return 'AV OPS Desk';
-  if (it.type==='tub') return 'Tub';
-  if (it.type==='stool') return 'Stool';
-  if (it.type==='smalltable') return it.label||'';
+  if (it.type==='light') return 'Light';
   return it.label||'';
-}
-function isAvopsType(t){ return t==='avops'; }
-/** Flip L/R/none on the group. Does not move desks or touch pack maths. */
-function setAvopsDrape(it, side){
-  const live=items.find(x=>x.id===it.id)||it;
-  const mates=groupMembers(live).filter(m=>m.type==='avops');
-  const list=mates.length?mates:[live];
-  list.forEach(m=>{ m.drape=null; });
-  if (side==='left' || side==='right') list[0].drape=side;
-  render();
-  setStatus(side ? ('AV OPS Desk · drape '+side+' edge') : 'AV OPS Desk · no drape');
-}
-function avopsDrapeSide(members){
-  for (const m of members){
-    if (m.drape==='left' || m.drape==='right') return m.drape;
-  }
-  return null;
-}
-/** One long-edge run for a snapped AV OPS group. left = −Z, right = +Z. */
-function avopsDrapeRun(members){
-  const side=avopsDrapeSide(members);
-  if (!side) return null;
-  let minX=Infinity, maxX=-Infinity, minZ=Infinity, maxZ=-Infinity;
-  for (const m of members){
-    minX=Math.min(minX, m.x-m.w/2);
-    maxX=Math.max(maxX, m.x+m.w/2);
-    minZ=Math.min(minZ, m.z-m.d/2);
-    maxZ=Math.max(maxZ, m.z+m.d/2);
-  }
-  const off=DRAPE_OFF;
-  if (side==='left') return { x0:minX, z0:minZ-off, x1:maxX, z1:minZ-off };
-  return { x0:minX, z0:maxZ+off, x1:maxX, z1:maxZ+off };
-}
-/** Parramatta USITT drape: end ticks + sine fullness. No fill. */
-function drapeSquigglePath(x0, y0, x1, y1){
-  const dx=x1-x0, dy=y1-y0;
-  const len=Math.hypot(dx,dy)||1;
-  const ux=dx/len, uy=dy/len;
-  const nx=-uy, ny=ux;
-  const cap=Math.max(4, 0.14*S);
-  const amp=Math.max(2.4, 0.075*S);
-  const waves=Math.max(3, Math.round(len/Math.max(7, 0.26*S)));
-  let d = 'M '+(x0-nx*cap*0.5)+' '+(y0-ny*cap*0.5)+' L '+(x0+nx*cap*0.5)+' '+(y0+ny*cap*0.5);
-  d += ' M '+(x1-nx*cap*0.5)+' '+(y1-ny*cap*0.5)+' L '+(x1+nx*cap*0.5)+' '+(y1+ny*cap*0.5);
-  const steps=waves*8;
-  for (let i=0;i<=steps;i++){
-    const t=i/steps;
-    const wobble=Math.sin(t*Math.PI*2*waves)*amp;
-    const x=x0+ux*len*t+nx*wobble;
-    const y=y0+uy*len*t+ny*wobble;
-    d += (i===0?' M ':' L ')+x+' '+y;
-  }
-  return d;
-}
-function placeMarkHtml(it, x, y){
-  const w=it.w*S, d=it.d*S;
-  const stroke=it.id===selectedId?'#c9a227':'#333';
-  const sw=it.id===selectedId?2.4:1.2;
-  const hit=`class="hit" data-id="${it.id}" style="cursor:grab"`;
-  const pe='style="pointer-events:none"';
-  let html='';
-  if (it.type==='speaker'){
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#2c2a26" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<circle cx="${x}" cy="${y}" r="${Math.min(w,d)*0.28}" fill="none" stroke="#f6f1e8" stroke-width="1.1" ${pe}/>`;
-  } else if (it.type==='foldback'){
-    const pts=[[x-w*0.28,y-d/2],[x+w*0.28,y-d/2],[x+w/2,y+d/2],[x-w/2,y+d/2]].map(p=>p[0]+','+p[1]).join(' ');
-    html+=`<polygon ${hit} points="${pts}" fill="#2c2a26" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<line x1="${x-w*0.16}" y1="${y-d*0.12}" x2="${x+w*0.16}" y2="${y-d*0.12}" stroke="#f6f1e8" stroke-width="1.1" ${pe}/>`;
-  } else if (it.type==='light'){
-    const base=Math.min(w,d);
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="transparent" stroke="${stroke}" stroke-width="${it.id===selectedId?2.2:0.6}"/>`;
-    html+=`<rect x="${x-base*0.28}" y="${y-base*0.28}" width="${base*0.56}" height="${base*0.56}" fill="#2c2a26" stroke="#1a1612" stroke-width="1.1" ${pe}/>`;
-    html+=`<line x1="${x-base*0.38}" y1="${y}" x2="${x+base*0.38}" y2="${y}" stroke="#1a1612" stroke-width="1.1" ${pe}/>`;
-    html+=`<rect x="${x-base*0.42}" y="${y-base*0.07}" width="${base*0.1}" height="${base*0.14}" fill="#3a3a38" ${pe}/>`;
-    html+=`<rect x="${x+base*0.32}" y="${y-base*0.07}" width="${base*0.1}" height="${base*0.14}" fill="#3a3a38" ${pe}/>`;
-    html+=`<circle cx="${x}" cy="${y}" r="${base*0.08}" fill="#c8c4bc" stroke="#1a1612" stroke-width="0.8" ${pe}/>`;
-  } else if (it.type==='steps'){
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#cfc8bc" stroke="${stroke}" stroke-width="${sw}"/>`;
-    for (let i=0;i<3;i++){
-      const yy=y-d/2+(i+0.5)*(d/3);
-      html+=`<line x1="${x-w/2+2}" y1="${yy}" x2="${x+w/2-2}" y2="${yy}" stroke="#8a8680" stroke-width="1.4" ${pe}/>`;
-    }
-  } else if (it.type==='coffeecart'){
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" rx="3" fill="#d8cfc2" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<circle cx="${x-w*0.22}" cy="${y}" r="${Math.min(w,d)*0.18}" fill="#6a4a32" stroke="#3a3328" stroke-width="0.8" ${pe}/>`;
-    html+=`<circle cx="${x+w*0.08}" cy="${y}" r="${Math.min(w,d)*0.14}" fill="#6a4a32" stroke="#3a3328" stroke-width="0.8" ${pe}/>`;
-    html+=`<circle cx="${x-w*0.38}" cy="${y+d*0.38}" r="2.2" fill="#2c2a26" ${pe}/>`;
-    html+=`<circle cx="${x+w*0.38}" cy="${y+d*0.38}" r="2.2" fill="#2c2a26" ${pe}/>`;
-  } else if (it.type==='trestle'){
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
-    const lab=kitLabel(it);
-    if (lab) html+=`<text x="${x}" y="${y-d/2-5}" text-anchor="middle" font-size="8" font-weight="650" fill="#3a3328" ${pe}>${lab}</text>`;
-  } else if (it.type==='avops'){
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#ddd4c6" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<text x="${x}" y="${y-d/2-5}" text-anchor="middle" font-size="9" font-weight="700" fill="#1a1612" ${pe}>AV OPS Desk</text>`;
-  } else if (it.type==='tub'){
-    const sw2=w*0.78, sd=d*0.72;
-    const pts=[
-      [x-sw2/2, y-sd*0.42],[x-sw2/2, y+sd*0.1],
-      [x, y+sd*0.42],[x+sw2/2, y+sd*0.1],[x+sw2/2, y-sd*0.42]
-    ];
-    html+=`<path ${hit} d="M ${pts[0][0]} ${pts[0][1]} L ${pts[1][0]} ${pts[1][1]} Q ${x-sw2/2} ${y+sd*0.48} ${pts[2][0]} ${pts[2][1]} Q ${x+sw2/2} ${y+sd*0.48} ${pts[3][0]} ${pts[3][1]} L ${pts[4][0]} ${pts[4][1]} Q ${x+sw2/2} ${y-sd*0.18} ${x} ${y-sd*0.12} Q ${x-sw2/2} ${y-sd*0.18} ${pts[0][0]} ${pts[0][1]} Z" fill="#5c564c" stroke="${stroke}" stroke-width="${sw}"/>`;
-  } else if (it.type==='stool'){
-    const r=Math.min(w,d)/2;
-    html+=`<circle ${hit} cx="${x}" cy="${y}" r="${r}" fill="#8e8880" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<circle cx="${x}" cy="${y}" r="${r*0.45}" fill="none" stroke="#3a3328" stroke-width="1" ${pe}/>`;
-  } else if (it.type==='smalltable'){
-    const r=Math.min(w,d)/2;
-    html+=`<circle ${hit} cx="${x}" cy="${y}" r="${r}" fill="#d8d0c4" stroke="${stroke}" stroke-width="${sw}"/>`;
-    html+=`<circle cx="${x}" cy="${y}" r="${r*0.22}" fill="none" stroke="#8a8680" stroke-width="0.8" ${pe}/>`;
-  } else {
-    html+=`<rect ${hit} x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#8e8880" stroke="${stroke}" stroke-width="${sw}"/>`;
-    const lab=kitLabel(it);
-    if (lab) html+=`<text x="${x}" y="${y-d/2-6}" text-anchor="middle" font-size="9" font-weight="650" fill="#222" ${pe}>${lab}</text>`;
-  }
-  return html;
 }
 function render(){
   updateCounts();
@@ -1575,21 +1425,13 @@ function render(){
       html+=`<text x="${x}" y="${y-d/2-6}" text-anchor="middle" font-size="9" font-weight="650" fill="#222" style="pointer-events:none">Lectern</text>`;
       html+=lockMark;
     } else {
-      html+=placeMarkHtml(it, x, y);
+      const w=it.w*S, d=it.d*S;
+      const fill = it.type==='light' ? '#9a958c' : '#8e8880';
+      const stroke=it.id===selectedId?'#c9a227':'#333';
+      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${it.id===selectedId?2.4:1.2}" style="cursor:grab"/>`;
+      html+=`<text x="${x}" y="${y-d/2-6}" text-anchor="middle" font-size="9" font-weight="650" fill="#222" style="pointer-events:none">${kitLabel(it)}</text>`;
       html+=lockMark;
     }
-  });
-  // One squiggle per AV OPS group — lengthens when a second trestle snaps beside
-  const avopsSeen={};
-  items.filter(i=>i.type==='avops').forEach(it=>{
-    const g=it.group||it.id;
-    if (avopsSeen[g]) return;
-    avopsSeen[g]=true;
-    const members=items.filter(o=>o.type==='avops' && (o.group||o.id)===g);
-    const run=avopsDrapeRun(members);
-    if (!run) return;
-    const path=drapeSquigglePath(sx(run.x0), sy(run.z0), sx(run.x1), sy(run.z1));
-    html+=`<path d="${path}" fill="none" stroke="#1a1612" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"/>`;
   });
   // Per-tile lines after every fill so shared edges stay visible (not one solid mass)
   stageTiles.forEach(it=>{
@@ -1634,9 +1476,6 @@ function deleteButtonLabel(){
   if (it.type==='round') return 'Delete table';
   if (it.type==='dance') return 'Delete tile';
   if (it.type==='stage') return 'Delete deck';
-  if (it.type==='avops') return 'Delete desk';
-  if (it.type==='trestle') return 'Delete trestle';
-  if (it.type==='steps') return 'Delete steps';
   return 'Delete';
 }
 function syncDeleteButton(){
@@ -1680,7 +1519,6 @@ function recomputeAttachGroups(type, prefix){
 }
 function recomputeStageGroups(){ recomputeAttachGroups('stage', 'stage-g'); }
 function recomputeDanceGroups(){ recomputeAttachGroups('dance', 'dance-g'); }
-function recomputeAvopsGroups(){ recomputeAttachGroups('avops', 'avops-g'); }
 function attachGapFor(type){
   return type==='stage' ? STAGE_GAP : (type==='dance' ? DANCE_GAP : 0);
 }
@@ -1729,54 +1567,6 @@ function snapDanceTile(it){
   if (it.type!=='dance') return false;
   return snapAttachDeck(it);
 }
-function snapAvopsDesk(it){
-  if (it.type!=='avops') return false;
-  const SNAP=0.55;
-  const others=items.filter(o=>o.type==='avops' && o.id!==it.id);
-  let best=null, bestDist=SNAP;
-  for (const o of others){
-    const cands=[
-      {x:o.x+(o.w+it.w)/2, z:o.z},
-      {x:o.x-(o.w+it.w)/2, z:o.z},
-      {x:o.x, z:o.z+(o.d+it.d)/2},
-      {x:o.x, z:o.z-(o.d+it.d)/2},
-    ];
-    for (const c of cands){
-      const dist=Math.hypot(c.x-it.x, c.z-it.z);
-      if (dist<bestDist){
-        const trial={...it, x:c.x, z:c.z};
-        if (isLegal(trial,{ignoreMove:true, ignoreAvops:true})){ bestDist=dist; best=c; }
-      }
-    }
-  }
-  if (!best) return false;
-  it.x=best.x; it.z=best.z;
-  return true;
-}
-function snapStepsToStage(it){
-  if (it.type!=='steps') return false;
-  const SNAP=0.32;
-  const others=items.filter(o=>o.type==='stage');
-  let best=null, bestDist=SNAP;
-  for (const o of others){
-    const cands=[
-      {x:o.x+(o.w+it.w)/2, z:o.z},
-      {x:o.x-(o.w+it.w)/2, z:o.z},
-      {x:o.x, z:o.z+(o.d+it.d)/2},
-      {x:o.x, z:o.z-(o.d+it.d)/2},
-    ];
-    for (const c of cands){
-      const dist=Math.hypot(c.x-it.x, c.z-it.z);
-      if (dist<bestDist){
-        const trial={...it, x:c.x, z:c.z};
-        if (isLegal(trial,{ignoreMove:true})){ bestDist=dist; best=c; }
-      }
-    }
-  }
-  if (!best) return false;
-  it.x=best.x; it.z=best.z;
-  return true;
-}
 function stageUnderLectern(lec){
   return items.find(st => st.type==='stage'
     && Math.abs(lec.x - st.x) <= st.w/2 + 0.05
@@ -1796,9 +1586,6 @@ function groupMembers(it){
   }
   if (it.type==='dance'){
     return !it.group ? [it] : items.filter(o=>o.type==='dance' && o.group===it.group);
-  }
-  if (it.type==='avops'){
-    return !it.group ? [it] : items.filter(o=>o.type==='avops' && o.group===it.group);
   }
   if (!it.group) return [it];
   return items.filter(o=>o.group===it.group);
@@ -1860,42 +1647,25 @@ function hideItemCtxMenu(){
 }
 function showItemContextMenu(clientX, clientY, it, seat){
   hideItemCtxMenu();
-  // Right-click Delete removed (t657). Lectern lock / AV OPS drape only.
-  if (!it || seat!=null) return;
-  if (it.type!=='lectern' && it.type!=='avops') return;
+  // Right-click Delete removed (t657). Lectern lock/unlock only.
+  if (!it || it.type!=='lectern' || seat!=null) return;
   const menu = document.createElement('div');
   menu.className = 'ctx-menu';
   menu.style.left = clientX+'px';
   menu.style.top = clientY+'px';
   const lab = document.createElement('div');
   lab.className = 'sec-lab';
-  if (it.type==='lectern'){
-    lab.textContent = 'Lectern';
-    menu.appendChild(lab);
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
-    b.onclick = ()=>{
-      hideItemCtxMenu();
-      if (it.locked) unlockLectern(it);
-      else lockLectern(it);
-    };
-    menu.appendChild(b);
-  } else {
-    lab.textContent = 'AV OPS Desk — drape';
-    menu.appendChild(lab);
-    [
-      { side:null, label:'No drape' },
-      { side:'left', label:'Left edge' },
-      { side:'right', label:'Right edge' },
-    ].forEach(k=>{
-      const b=document.createElement('button');
-      b.type='button';
-      b.textContent=k.label;
-      b.onclick=()=>{ hideItemCtxMenu(); setAvopsDrape(it, k.side); };
-      menu.appendChild(b);
-    });
-  }
+  lab.textContent = 'Lectern';
+  menu.appendChild(lab);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = it.locked ? 'Unlock lectern' : 'Lock lectern';
+  b.onclick = ()=>{
+    hideItemCtxMenu();
+    if (it.locked) unlockLectern(it);
+    else lockLectern(it);
+  };
+  menu.appendChild(b);
   document.body.appendChild(menu);
   itemCtxMenu = menu;
 }
@@ -1907,8 +1677,7 @@ function onItemContextMenu(evt){
   if (!it) return;
   const seatRaw = evt.currentTarget.dataset.seat;
   const seat = seatRaw!=null && seatRaw!=='' ? Number(seatRaw) : null;
-  if (Number.isFinite(seat)) return;
-  if (it.type!=='lectern' && it.type!=='avops') return;
+  if (it.type!=='lectern' || Number.isFinite(seat)) return;
   selectedId = it.id;
   selectedSeat = null;
   render();
@@ -1923,12 +1692,6 @@ function onDown(evt){
       evt.preventDefault(); evt.stopPropagation();
       const p=fromSvg(svgPoint(evt).x, svgPoint(evt).y);
       stampKitAt(placeKit, p.x, p.z);
-      return;
-    }
-    if (placeKit==='steps' && surface && isSurfaceType(surface.type)){
-      evt.preventDefault(); evt.stopPropagation();
-      const p=fromSvg(svgPoint(evt).x, svgPoint(evt).y);
-      stampKitAt('steps', p.x, p.z);
     }
     return;
   }
@@ -2003,7 +1766,6 @@ function deleteSelected(){
   selectedId=null; selectedSeat=null; drag=null;
   if (typ==='stage') recomputeStageGroups();
   if (typ==='dance') recomputeDanceGroups();
-  if (typ==='avops') recomputeAvopsGroups();
   render();
   setStatus(typ==='stage' ? 'Stage deck deleted' : (typ==='dance' ? 'Dance tile deleted' : 'Deleted'));
 }
@@ -2071,39 +1833,21 @@ function settle(){
       if (m){ m.x=ll.x; m.z=ll.z; }
     }
   }
-  if (it.type==='stage' || it.type==='dance' || it.type==='avops'){
+  if (it.type==='stage' || it.type==='dance'){
     if (it.type==='stage') snapStageDeck(it);
-    else if (it.type==='dance') snapDanceTile(it);
-    else {
-      for (const m of groupMembers(it)) snapAvopsDesk(m);
-    }
+    else snapDanceTile(it);
     if (it.type==='stage') recomputeStageGroups();
-    else if (it.type==='dance') recomputeDanceGroups();
-    else {
-      recomputeAvopsGroups();
-      const mates=groupMembers(items.find(x=>x.id===it.id)||it);
-      if (mates.length>1){
-        const side=avopsDrapeSide(mates);
-        mates.forEach(m=>{ if (side && m.drape && m.drape!==side) m.drape=null; });
-        const first=mates.find(m=>m.drape===side);
-        mates.forEach(m=>{ if (first && m.id!==first.id) m.drape=null; });
-      }
-    }
+    else recomputeDanceGroups();
     invalidateFloorMax();
     const joined=groupMembers(items.find(x=>x.id===it.id)||it).length;
-    const unit=it.type==='stage' ? 'decks' : (it.type==='dance' ? 'tiles' : 'trestles');
-    const one=it.type==='stage' ? 'Stage deck' : (it.type==='dance' ? 'Dance tile' : 'AV OPS Desk');
-    const head=it.type==='stage'?'Stage':(it.type==='dance'?'Dance':'AV OPS');
-    setStatus(joined>1 ? (head+' snapped · '+joined+' '+unit+' move as one') : one);
-  }
-  if (it.type==='steps'){
-    snapStepsToStage(it);
-    invalidateFloorMax();
+    const unit=it.type==='stage' ? 'decks' : 'tiles';
+    const one=it.type==='stage' ? 'Stage deck' : 'Dance tile';
+    setStatus(joined>1 ? ((it.type==='stage'?'Stage':'Dance')+' snapped · '+joined+' '+unit+' move as one') : one);
   }
   if (it.kind==='permanent'){
     yieldForPermanents(groupMembers(it));
     if (liveMax){ pruneIllegalTables(); fillGapsHexOnce(); renumberTables(); setGuestsFromTables(); setStatus('Live max · settled'); }
-    else if (it.type!=='stage' && it.type!=='dance' && it.type!=='avops') setStatus('Settled');
+    else if (it.type!=='stage' && it.type!=='dance') setStatus('Settled');
   } else if (it.kind==='move' && it.type==='round'){
     renumberTables(); // keep # geography after shove
     invalidateFloorMax();
@@ -2415,18 +2159,6 @@ const KIT_DEFS = {
   light: { type:'light', w:LIGHT_TREE.w, d:LIGHT_TREE.d, label:'Light' },
   dance: { type:'dance', w:DANCE_TILE.w, d:DANCE_TILE.d, label:'Dance', group:null },
   stage: { type:'stage', w:STAGE_DECK.w, d:STAGE_DECK.d, label:'Stage', group:null },
-  steps: { type:'steps', w:STAGE_STEPS.w, d:STAGE_STEPS.d, label:'Steps' },
-  coffeecart: { type:'coffeecart', w:COFFEE_CART.w, d:COFFEE_CART.d, label:'Coffee' },
-  trestle: { type:'trestle', w:TRESTLE.w, d:TRESTLE.d, label:'' },
-  'trestle-water': { type:'trestle', w:TRESTLE.w, d:TRESTLE.d, label:'Water station' },
-  'trestle-reg': { type:'trestle', w:TRESTLE.w, d:TRESTLE.d, label:'Registration desk' },
-  'trestle-expo': { type:'trestle', w:TRESTLE.w, d:TRESTLE.d, label:'Expo stand' },
-  avops: { type:'avops', w:TRESTLE.w, d:TRESTLE.d, label:'AV OPS Desk' },
-  'avops-left': { type:'avops', w:TRESTLE.w, d:TRESTLE.d, label:'AV OPS Desk', drape:'left' },
-  'avops-right': { type:'avops', w:TRESTLE.w, d:TRESTLE.d, label:'AV OPS Desk', drape:'right' },
-  tub: { type:'tub', w:TUB_CHAIR.w, d:TUB_CHAIR.d, label:'Tub' },
-  stool: { type:'stool', w:STOOL.w, d:STOOL.d, label:'Stool' },
-  smalltable: { type:'smalltable', w:SMALL_TABLE.w, d:SMALL_TABLE.d, label:'' },
 };
 function clearPlaceKit(){
   placeKit=null;
@@ -2467,18 +2199,9 @@ function stampKitAt(kind, x, z){
     snapDanceTile(it);
   } else {
     it = { id:kind+seq, kind:'permanent', type:def.type, x, z, w:def.w, d:def.d, label:def.label, locked:false };
-    if (def.drape) it.drape = def.drape;
     it = fitPermanentIntoPerimeter(it);
-    if (it.type==='avops'){
-      snapAvopsDesk(it);
-      const mates=items.filter(o=>o.type==='avops' && decksFlush(o, it));
-      if (mates.some(m=>m.drape==='left'||m.drape==='right')) it.drape=null;
-    } else if (it.type==='steps'){
-      snapStepsToStage(it);
-    }
   }
   items.push(it);
-  if (it.type==='avops') recomputeAvopsGroups();
   if (kind==='stage') recomputeStageGroups();
   else if (kind==='dance') recomputeDanceGroups();
   yieldOverlappingOnly(it);
@@ -2494,8 +2217,7 @@ function stampKitAt(kind, x, z){
     const one=kind==='stage' ? 'Stage deck' : 'Dance tile';
     setStatus(joined>1 ? ((kind==='stage'?'Stage':'Dance')+' snapped · '+joined+' '+unit+' move as one') : one);
   } else {
-    const placedLab = kitLabel(it) || (it.type==='trestle' ? 'Trestle' : (it.type==='smalltable' ? 'Small table' : it.type));
-    setStatus('Placed · '+placedLab);
+    setStatus('Placed · '+kitLabel(it));
   }
 }
 
@@ -2531,7 +2253,6 @@ function snapshotStandardItems(){
   return items.map(i=>({
     id:i.id, kind:i.kind, type:i.type, x:i.x, z:i.z, w:i.w, d:i.d,
     label:i.label||'', locked:!!i.locked, group:i.group||null,
-    drape: i.drape||null,
     removedSeats: Array.isArray(i.removedSeats) ? i.removedSeats.slice() : []
   }));
 }
@@ -2548,7 +2269,6 @@ function applyStandardSnapshot(std){
   if (std.people) brief.people = String(std.people);
   if (typeof recomputeStageGroups === 'function') recomputeStageGroups();
   if (typeof recomputeDanceGroups === 'function') recomputeDanceGroups();
-  if (typeof recomputeAvopsGroups === 'function') recomputeAvopsGroups();
   renumberTables();
   applyBriefToDom();
   render();
@@ -2799,53 +2519,17 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,snapStageDeck,snapAttachDeck,attachGapFor,STAGE_DECK,STAGE_GAP,DANCE_GAP,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel,setAvopsDrape};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,snapStageDeck,snapAttachDeck,attachGapFor,STAGE_DECK,STAGE_GAP,DANCE_GAP,stampKitAt,canPlaceKitOnSurface,isPlaceableKitType};
 fillKitHosts();
 wireSharedActions();
 bindBrief();
 refreshStyleSelects();
 
-function placeMenuIcon(kind){
-  const svg = (inner)=>'<svg class="ctx-ico" viewBox="0 0 18 18" aria-hidden="true">'+inner+'</svg>';
-  if (kind==='steps') return svg('<rect x="2" y="3" width="14" height="12" fill="#cfc8bc" stroke="#5c564c"/><path d="M3 6.5h12M3 9h12M3 11.5h12" stroke="#8a8680"/>');
-  if (kind==='light') return svg('<rect x="5" y="5" width="8" height="8" fill="#2c2a26" stroke="#1a1612"/><path d="M3 9h12" stroke="#1a1612"/><rect x="2" y="8" width="2" height="2" fill="#3a3a38"/><rect x="14" y="8" width="2" height="2" fill="#3a3a38"/>');
-  if (kind==='speaker') return svg('<rect x="4" y="4" width="10" height="10" fill="#2c2a26" stroke="#1a1612"/><circle cx="9" cy="9" r="2.4" fill="none" stroke="#f6f1e8"/>');
-  if (kind==='foldback') return svg('<path d="M6 4h6l3 10H3z" fill="#2c2a26" stroke="#1a1612"/><path d="M7 8h4" stroke="#f6f1e8"/>');
-  if (kind==='coffeecart') return svg('<rect x="2" y="5" width="14" height="8" rx="1.5" fill="#d8cfc2" stroke="#5c564c"/><circle cx="7" cy="9" r="2" fill="#6a4a32"/><circle cx="11.5" cy="9" r="1.5" fill="#6a4a32"/>');
-  if (kind==='avops') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 14 q 2-2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
-  if (kind==='trestle' || kind==='trestle-water' || kind==='trestle-reg' || kind==='trestle-expo')
-    return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/>');
-  if (kind==='tub') return svg('<path d="M5 5v5q0 3 4 3t4-3V5q0 2-4 2.4T5 5z" fill="#5c564c" stroke="#333"/>');
-  if (kind==='stool') return svg('<circle cx="9" cy="9" r="5" fill="#8e8880" stroke="#333"/><circle cx="9" cy="9" r="2" fill="none" stroke="#3a3328"/>');
-  if (kind==='smalltable') return svg('<circle cx="9" cy="9" r="6" fill="#d8d0c4" stroke="#5c564c"/><circle cx="9" cy="9" r="1.6" fill="none" stroke="#8a8680"/>');
-  if (kind==='table') return svg('<circle cx="9" cy="9" r="6" fill="#d7cbb8" stroke="#5c564c"/>');
-  if (kind==='stage') return svg('<rect x="2" y="5" width="14" height="8" fill="#d4d4d4" stroke="#8a8680"/>');
-  if (kind==='dance') return svg('<rect x="3" y="3" width="12" height="12" fill="#c4a056" fill-opacity=".5" stroke="#8a6e2f"/>');
-  if (kind==='lectern') return svg('<path d="M4 14h10l-2-10H6z" fill="#3a3d42" stroke="#222"/>');
-  return svg('<rect x="4" y="4" width="10" height="10" fill="#8e8880" stroke="#333"/>');
-}
 (function mapAddContextMenu(){
   let menu=null;
-  let openedAt=0;
   function hide(){ if(menu){ menu.remove(); menu=null; } }
-  function hideIfIdle(){ if (Date.now()-openedAt < 400) return; hide(); }
-  // Right-click on empty plan is PLACE (no Delete). Soft/Al pack + prior kit.
+  // Short grouped list — not a grocery dump
   const GROUPS = [
-    { lab:'Place', items:[
-      { kind:'steps', label:'Stage steps' },
-      { kind:'light', label:'LX tree' },
-      { kind:'speaker', label:'Speaker' },
-      { kind:'foldback', label:'Foldback monitor' },
-      { kind:'coffeecart', label:'Coffee cart' },
-      { kind:'trestle', label:'Trestle table' },
-      { kind:'trestle-water', label:'Water station' },
-      { kind:'trestle-reg', label:'Registration desk' },
-      { kind:'trestle-expo', label:'Expo stand' },
-      { kind:'avops', label:'AV OPS Desk' },
-      { kind:'tub', label:'Tub chair' },
-      { kind:'stool', label:'Stool' },
-      { kind:'smalltable', label:'Small table' },
-    ]},
     { lab:'Tables', items:[ { kind:'table', label:'Table' } ] },
     { lab:'Stage & floor', items:[
       { kind:'stage', label:'Stage deck' },
@@ -2853,90 +2537,46 @@ function placeMenuIcon(kind){
     ]},
     { lab:'AV', items:[
       { kind:'lectern', label:'Lectern' },
+      { kind:'light', label:'Lighting tree' },
+      { kind:'speaker', label:'Speaker' },
+      { kind:'foldback', label:'Foldback' },
     ]},
   ];
-  function addPlaceBtn(host, k, p){
-    const b=document.createElement('button');
-    b.type='button';
-    b.innerHTML = placeMenuIcon(k.kind)+'<span>'+k.label+'</span>';
-    const go=(ev)=>{
-      ev.preventDefault();
-      ev.stopPropagation();
-      if (k.kind==='avops'){
-        fillAvopsChooser(host, p);
-        return;
-      }
-      hide();
-      if (k.kind==='table'){
-        const n=placeRoundTableAt(p.x, p.z, true);
-        if (!n){ setStatus('No room for table here'); return; }
-        render();
-        setStatus('Table added · '+n+' tables');
-        return;
-      }
-      stampKitAt(k.kind, p.x, p.z);
-    };
-    b.addEventListener('pointerdown', go);
-    b.onclick=go;
-    host.appendChild(b);
-  }
-  function pinMenu(el, clientX, clientY){
-    el.style.left = clientX+'px';
-    el.style.top = clientY+'px';
-    const r = el.getBoundingClientRect();
-    let x = clientX, y = clientY;
-    if (r.right > window.innerWidth - 8) x = Math.max(8, window.innerWidth - r.width - 8);
-    if (r.bottom > window.innerHeight - 8) y = Math.max(8, window.innerHeight - r.height - 8);
-    el.style.left = x+'px';
-    el.style.top = y+'px';
-  }
-  function drapeChooserIcon(kind){
-    const svg = (inner)=>'<svg class="ctx-ico" viewBox="0 0 18 18" aria-hidden="true">'+inner+'</svg>';
-    if (kind==='avops-left') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 14 q 2-2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
-    if (kind==='avops-right') return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/><path d="M2 4 q 2 2 3.5 0 t 3.5 0 t 3.5 0 t 3.5 0" fill="none" stroke="#1a1612" stroke-width="1.2"/>');
-    return svg('<rect x="2" y="6" width="14" height="6" fill="#ddd4c6" stroke="#4a453c"/>');
-  }
-  function fillAvopsChooser(host, p){
-    host.innerHTML='';
-    const lab=document.createElement('div');
-    lab.className='sec-lab';
-    lab.textContent='AV OPS Desk — drape';
-    host.appendChild(lab);
-    [
-      { kind:'avops', label:'No drape' },
-      { kind:'avops-left', label:'Left edge' },
-      { kind:'avops-right', label:'Right edge' },
-    ].forEach(k=>{
-      const b=document.createElement('button');
-      b.type='button';
-      b.innerHTML = drapeChooserIcon(k.kind)+'<span>'+k.label+'</span>';
-      const go=(ev)=>{ ev.preventDefault(); ev.stopPropagation(); hide(); stampKitAt(k.kind, p.x, p.z); };
-      b.addEventListener('pointerdown', go);
-      b.onclick=go;
-      host.appendChild(b);
-    });
-    pinMenu(host, parseFloat(host.style.left)||0, parseFloat(host.style.top)||0);
-    openedAt = Date.now();
-  }
-  document.addEventListener('click', hideIfIdle);
+  document.addEventListener('click', hide);
   document.addEventListener('click', hideItemCtxMenu);
   svg.addEventListener('contextmenu', (e)=>{
     e.preventDefault();
     if (e.target.closest && e.target.closest('.hit')) return;
-    // Empty map: PLACE menu. Item hits: no right-click Delete (left Delete button).
+    // Empty map: Add / Templates. Item hits: no right-click Delete (left Delete button).
     hide();
     hideItemCtxMenu();
     const p = fromSvg(svgPoint(e).x, svgPoint(e).y);
     menu = document.createElement('div');
     menu.className = 'ctx-menu';
-    menu.addEventListener('click', ev=>ev.stopPropagation());
-    menu.addEventListener('contextmenu', ev=>ev.preventDefault());
+    menu.style.left = e.clientX+'px';
+    menu.style.top = e.clientY+'px';
     GROUPS.forEach(g=>{
       const lab=document.createElement('div');
       lab.className='sec-lab';
       lab.textContent=g.lab;
       menu.appendChild(lab);
-      g.items.forEach(k=>addPlaceBtn(menu, k, p));
+      g.items.forEach(k=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.textContent=k.label;
+        b.onclick=()=>{
+          hide();
+          if (k.kind==='table'){
+            const n=placeRoundTableAt(p.x, p.z, true);
+            if (!n){ setStatus('No room for table here'); return; }
+            render();
+            setStatus('Table added · '+n+' tables');
+            return;
+          }
+          stampKitAt(k.kind, p.x, p.z);
+        };
+        menu.appendChild(b);
+      });
     });
     const tLab=document.createElement('div');
     tLab.className='sec-lab';
@@ -2945,14 +2585,13 @@ function placeMenuIcon(kind){
     const saveBtn=document.createElement('button');
     saveBtn.type='button';
     saveBtn.textContent='Make this a Banquet standard…';
-    saveBtn.onclick=(ev)=>{ ev.stopPropagation(); hide(); saveBanquetStandard(); };
+    saveBtn.onclick=()=>{ hide(); saveBanquetStandard(); };
     menu.appendChild(saveBtn);
     loadStandards().forEach(std=>{
       const b=document.createElement('button');
       b.type='button';
       b.textContent='Load · '+std.name;
-      b.onclick=(ev)=>{
-        ev.stopPropagation();
+      b.onclick=()=>{
         hide();
         brief.style='banquet-std:'+std.id;
         refreshStyleSelects();
@@ -2962,8 +2601,6 @@ function placeMenuIcon(kind){
       menu.appendChild(b);
     });
     document.body.appendChild(menu);
-    pinMenu(menu, e.clientX, e.clientY);
-    openedAt = Date.now();
   });
 })();
 
@@ -3103,6 +2740,6 @@ setTimeout(()=>{ recomputeFloorMaxAlgo(); updateCounts(); }, 0);
   // Empty = localStorage-only (Worker not up). SaiD zero-touch; Al never hunts keys.
   window.__PLAN2D_SYNC__ = window.__PLAN2D_SYNC__ || '';
 </script>
-<script src="sync.js?t658"></script>
+<script src="sync.js?t660"></script>
 </body>
 </html>
