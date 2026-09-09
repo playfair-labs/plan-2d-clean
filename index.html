@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Plan 2D Clean — QT Parramatta</title>
-<meta name="plan2d-build" content="t661" />
+<meta name="plan2d-build" content="t662" />
 <meta name="plan2d-sync" content="" />
 <style>
   :root {
@@ -188,6 +188,14 @@
   }
   .delete-big:hover { background:#e03a3a; }
   .delete-big:disabled { opacity:0.38; cursor:default; background:#7a3030; }
+  .undo-row { display:flex; gap:8px; margin:8px 0 0; }
+  .undo-row button {
+    flex:1; box-sizing:border-box; padding:12px 8px; border-radius:10px;
+    border:1px solid #3a3834; background:#242220; color:#eceae6;
+    font-size:16px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; cursor:pointer;
+  }
+  .undo-row button:hover { border-color:#c9a227; color:#c9a227; }
+  .undo-row button:disabled { opacity:0.38; cursor:default; }
 
   /* Prototype: type chips ON each left-rail row (Al: knobs on the thing) */
   .rail { width: min(400px, 48vw) !important; min-width: 320px !important; }
@@ -679,7 +687,7 @@
           <button type="button" id="throwBtn" class="quiet-btn" aria-pressed="false">Throw · off</button>
         </div>
       </div>
-      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t661</div>
+      <div class="build-big" id="buildStampBig" aria-label="Build"><small>Build</small>t662</div>
       <div class="ui-tog" role="tablist" aria-label="Left rail UI">
         <button type="button" data-ui="1" class="on">UI 1</button>
         <button type="button" data-ui="2">UI 2</button>
@@ -693,6 +701,10 @@
         <button type="button" id="tidyRowsBtn">Tidy rows</button>
         <button type="button" id="tidyStaggerBtn">Tidy staggered</button>
         <button type="button" id="shuffleBtn">Shuffle</button>
+      </div>
+      <div class="undo-row">
+        <button type="button" id="undoBtn" disabled title="Undo last plan action">Undo</button>
+        <button type="button" id="redoBtn" disabled title="Redo">Redo</button>
       </div>
       <button type="button" id="deleteBtn" class="delete-big" title="Delete the current selection">Delete</button>
       <div class="num-mode" role="group" aria-label="Table numbers">
@@ -733,9 +745,9 @@
   <div class="phone-home" id="phoneHome"></div>
   <div class="phone-room" id="phoneRoom" hidden></div>
 </div>
-<script src="rooms-catalog.js?t661"></script>
-<script src="layouts.js?t661"></script>
-<script src="assets/dimensions/dimensions-icons.js?t661"></script>
+<script src="rooms-catalog.js?t662"></script>
+<script src="layouts.js?t662"></script>
+<script src="assets/dimensions/dimensions-icons.js?t662"></script>
 <script>
 // --- Grand roomSheet dump (venue-map toPlan) — metres ---
 // Live Grand stays bit-identical so banquet packHexSync / BEST_SEED do not move.
@@ -1066,6 +1078,54 @@ const DANCE_GAP = 0.02;
 const dancePitch = DANCE_TILE.w + DANCE_GAP;
 const BANQUET_DANCE_N = 4; // 4×4 of 1 m tiles — same 4 m footprint as the old single plate
 let items = []; // empty room — place stage/dance via Style (Banquet · …)
+let undoStack=[];
+let redoStack=[];
+function planSnap(){
+  return JSON.stringify({
+    items, selectedId, selectedSeat, seq, stageSeq, danceSeq,
+    people: (typeof brief!=='undefined' && brief) ? brief.people : null
+  });
+}
+function syncUndoBtns(){
+  const u=document.getElementById('undoBtn');
+  const r=document.getElementById('redoBtn');
+  if (u) u.disabled=!undoStack.length;
+  if (r) r.disabled=!redoStack.length;
+}
+function pushUndo(){
+  undoStack.push(planSnap());
+  if (undoStack.length>80) undoStack.shift();
+  redoStack.length=0;
+  syncUndoBtns();
+}
+function applyPlanSnap(raw){
+  const o=JSON.parse(raw);
+  items = o.items||[];
+  selectedId = o.selectedId||null;
+  selectedSeat = o.selectedSeat==null?null:o.selectedSeat;
+  if (typeof o.seq==='number') seq=o.seq;
+  if (typeof o.stageSeq==='number') stageSeq=o.stageSeq;
+  if (typeof o.danceSeq==='number') danceSeq=o.danceSeq;
+  if (o.people!=null && typeof brief!=='undefined' && brief){ brief.people=o.people; applyBriefToDom(); }
+  try { recomputeStageGroups(); } catch(e){}
+  try { recomputeDanceGroups(); } catch(e){}
+  try { recomputeAvopsGroups(); } catch(e){}
+  invalidateFloorMax();
+  render();
+  syncUndoBtns();
+}
+function undoPlan(){
+  if (!undoStack.length) return;
+  redoStack.push(planSnap());
+  applyPlanSnap(undoStack.pop());
+  setStatus('Undo');
+}
+function redoPlan(){
+  if (!redoStack.length) return;
+  undoStack.push(planSnap());
+  applyPlanSnap(redoStack.pop());
+  setStatus('Redo');
+}
 
 
 function isLocked(it){ return !!it.locked; }
@@ -1375,6 +1435,7 @@ function findFreeSlotNear(x0, z0, maxR){
   return null;
 }
 function placeRoundTableAt(x, z, preferNear){
+  pushUndo();
   let slot = preferNear ? findFreeSlotNear(x, z) : null;
   if (!slot) slot = findFreeSlot(TABLE_D, TABLE_D);
   if (!slot) return null;
@@ -2205,6 +2266,7 @@ function onDown(evt){
     const moved=Math.hypot((drag._cx||startX)-startX, (drag._cy||startY)-startY);
     if (moved<6){ toggleLock(it); drag=null; }
   }, 550);
+  pushUndo();
   drag={
     id, group: it.group||null,
     ox:p.x-it.x, oz:p.z-it.z,
@@ -2217,6 +2279,7 @@ function onDown(evt){
   syncDeleteButton();
 }
 function deleteSeat(it, seat){
+  pushUndo();
   if (!it || it.type!=='round') return;
   const idx = Number(seat);
   if (!Number.isFinite(idx) || idx<0 || idx>=seatsOnRound(it)) return;
@@ -2230,8 +2293,9 @@ function deleteSeat(it, seat){
   setStatus('Chair deleted · '+brief.people+' guests · table stays');
 }
 function deleteSelected(){
-  invalidateFloorMax();
   if (!selectedId) return;
+  pushUndo();
+  invalidateFloorMax();
   const it=items.find(x=>x.id===selectedId);
   // Left Delete only — chair if nested, else the item (stage deck / dance tile / table / kit)
   if (it && it.type==='round' && selectedSeat!=null){
@@ -2369,8 +2433,14 @@ window.addEventListener('pointerup', settle);
 window.addEventListener('pointercancel', settle);
 
 document.getElementById('deleteBtn').onclick=()=>deleteSelected();
+document.getElementById('undoBtn').onclick=()=>undoPlan();
+document.getElementById('redoBtn').onclick=()=>redoPlan();
+syncUndoBtns();
 window.addEventListener('keydown', (e)=>{
   if (e.key==='Escape') clearPlaceKit();
+  const z = (e.key==='z' || e.key==='Z') && (e.metaKey || e.ctrlKey);
+  if (z && e.shiftKey){ e.preventDefault(); redoPlan(); }
+  else if (z){ e.preventDefault(); undoPlan(); }
 });
 document.getElementById('addTable').onclick=()=>{
   const n=placeRoundTableAt(0, 0, false);
@@ -2602,6 +2672,7 @@ function wireSharedActions(){
     // Yield one frame so status paints, then pack (hex is <200ms — no multi-round freeze)
     setTimeout(()=>{
       try {
+        pushUndo();
         const t0=performance.now();
         if (!isBanquetPackStyle()){
           applyStyleMax(brief.style);
@@ -2639,6 +2710,7 @@ document.querySelectorAll('.screenKeepBtn').forEach(b=>{
 });
 
 document.querySelectorAll('.clearBtn').forEach(b=>b.onclick=()=>{
+    pushUndo();
     invalidateFloorMax();
     // Everything in the room — stage, dance, AV, tables, locks
     items=[];
@@ -2651,9 +2723,9 @@ document.querySelectorAll('.clearBtn').forEach(b=>b.onclick=()=>{
     setStatus(liveMax ? 'Live max ON · drag stage/dance' : 'Live max off');
   });
 }
-document.getElementById('tidyRowsBtn').onclick=()=>tidyLayout('rows');
-document.getElementById('tidyStaggerBtn').onclick=()=>tidyLayout('staggered');
-document.getElementById('shuffleBtn').onclick=()=>shuffleMovables();
+document.getElementById('tidyRowsBtn').onclick=()=>{ pushUndo(); tidyLayout('rows'); };
+document.getElementById('tidyStaggerBtn').onclick=()=>{ pushUndo(); tidyLayout('staggered'); };
+document.getElementById('shuffleBtn').onclick=()=>{ pushUndo(); shuffleMovables(); };
 
 const KIT_DEFS = {
   lectern: { type:'lectern', w:LECTERN.w, d:LECTERN.d, label:'Lectern' },
@@ -2696,9 +2768,10 @@ function nextStageAnchor(){
   return { x:right.x + deckPitch, z:right.z };
 }
 function stampKitAt(kind, x, z){
-  invalidateFloorMax();
   const def=KIT_DEFS[kind];
   if (!def) return;
+  pushUndo();
+  invalidateFloorMax();
   seq++;
   let it;
   if (kind==='stage'){
@@ -3097,6 +3170,7 @@ function applyStyleMax(styleVal){
 }
 
 function applyBanquetBigStuff(styleVal){
+  pushUndo();
   invalidateFloorMax();
   // Saved Banquet standard template
   if (String(styleVal||'').startsWith('banquet-std:')){
@@ -3528,7 +3602,7 @@ setTimeout(()=>{ recomputeFloorMaxAlgo(); updateCounts(); }, 0);
   // Empty = localStorage-only (Worker not up). SaiD zero-touch; Al never hunts keys.
   window.__PLAN2D_SYNC__ = window.__PLAN2D_SYNC__ || '';
 </script>
-<script src="sync.js?t661"></script>
+<script src="sync.js?t662"></script>
 <script>
 (function outputStack(){
   const preview = document.getElementById('pdfPreview');
