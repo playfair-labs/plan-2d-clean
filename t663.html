@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="plan2d-build" content="t663" />
+<title>t663 — tombstone 10</title>
+<style>
+  html,body { height:100%; margin:0; background:#fff; color:#111; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  body { min-height:100dvh; display:flex; flex-direction:column; }
+  header { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; padding-top:max(10px, env(safe-area-inset-top)); border-bottom:1px solid #e6e6e6; }
+  header strong { font-size:15px; letter-spacing:.04em; }
+  header span { color:#666; font-size:13px; }
+  button { background:#111; color:#fff; border:0; border-radius:8px; padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; }
+  main { flex:1; display:flex; align-items:center; justify-content:center; padding:12px; padding-bottom:max(16px, env(safe-area-inset-bottom)); }
+  svg { width:min(92vw, 92dvh, 720px); height:auto; display:block; }
+  .chair { cursor:pointer; }
+  .chair:hover use { stroke:#c9a227; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <strong>t663</strong>
+    <span>round table · 10 tombstone chairs · tap a chair to delete it</span>
+  </div>
+  <button type="button" id="reset">Reset</button>
+</header>
+<main>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 400" width="100%" height="100%" role="img" aria-label="Round table with 10 tombstone chairs">
+  <title>t663 — round table · 10 tombstone chairs</title>
+  <desc>One chair path, rotated every 36°. Each chair is its own group (chair-0 … chair-9) so one can be deleted without killing the set.</desc>
+  <defs>
+    <path id="chair-tombstone"
+          d="M169.900,295.362 A100.000,100.000 0 0 1 230.100,295.362 L230.100,322.362 A30.100,30.100 0 0 1 169.900,322.362 Z"
+          fill="#ffffff"
+          stroke="#000000"
+          stroke-width="2.25"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+  </defs>
+  <rect width="400" height="400" fill="#ffffff"/>
+  <circle id="table" cx="200" cy="200" r="100" fill="none" stroke="#000000" stroke-width="2.25"/>
+  <g id="chair-0" class="chair"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-1" class="chair" transform="rotate(36 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-2" class="chair" transform="rotate(72 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-3" class="chair" transform="rotate(108 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-4" class="chair" transform="rotate(144 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-5" class="chair" transform="rotate(180 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-6" class="chair" transform="rotate(216 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-7" class="chair" transform="rotate(252 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-8" class="chair" transform="rotate(288 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+  <g id="chair-9" class="chair" transform="rotate(324 200 200)"><use href="#chair-tombstone" xlink:href="#chair-tombstone"/></g>
+</svg>
+
+</main>
+<script>
+const src = document.querySelector('main svg').innerHTML;
+document.querySelectorAll('.chair').forEach(g => {
+  g.addEventListener('click', () => g.remove());
+});
+document.getElementById('reset').onclick = () => location.reload();
+</script>
+</body>
+</html>
