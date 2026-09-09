@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+]>
+<svg version="1.1" xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="750px" height="750px"
+	 viewBox="0 0 750 750" enable-background="new 0 0 750 750" xml:space="preserve">
+<metadata>
+	<sfw  xmlns="&ns_sfw;">
+		<slices></slices>
+		<sliceSourceBounds  bottomLeftOrigin="true" height="9811.461" width="4610.946" x="-2263.946" y="-2550"></sliceSourceBounds>
+	</sfw>
+</metadata>
+<g id="FILL-BACKGROUND">
+	<rect y="0" fill="#FFFFFF" width="750" height="750"/>
+</g>
+<g id="N-DIMENSIONS">
+</g>
+<g id="N-TEXT">
+</g>
+<g id="_x32_D_x24_AG-DIAGRAM">
+	<g id="POLYLINE_73_">
+		<g>
+			<g>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="153.618" y1="550.045" x2="155.618" y2="550.045"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.0254,7.0444" x1="162.663" y1="550.045" x2="590.86" y2="550.045"/>
+				
+					<line fill="none" stroke="#1B7FFF" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" x1="594.382" y1="550.045" x2="596.382" y2="550.045"/>
+			</g>
+		</g>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-DETAILS-DIAGRAM">
+</g>
+<g id="_x32_D_x24_AG-DETAILS">
+</g>
+<g id="_x32_D_x24_AG-FURNITURE">
+	<g id="POLYLINE_284_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M552.386,542.093l-15.645,7.953c-80.627,0-242.876,0-323.482,0l-15.645-7.953"/>
+	</g>
+	<g id="POLYLINE_122_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M375,542.093H197.614l18.373-244.409c79.267,0,238.779,0,318.026,0l18.373,244.409H375z"/>
+	</g>
+	<g id="POLYLINE_121_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M375,245.955H111.455v7.602c131.375,0,395.748,0,527.09,0v-7.602H375z"/>
+	</g>
+	<g id="POLYLINE_118_">
+		
+			<line fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="534.013" y1="297.684" x2="638.545" y2="253.557"/>
+	</g>
+	<g id="POLYLINE_116_">
+		
+			<line fill="none" stroke="#1B7FFF" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" x1="215.987" y1="297.684" x2="111.455" y2="253.557"/>
+	</g>
+</g>
+<g id="_x32_D_x24_AG-OUTLINE">
+	<g id="POLYLINE_117_">
+		
+			<path fill="none" stroke="#1B7FFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			M197.614,542.093l15.645,7.953c80.627,0,242.876,0,323.482,0l15.645-7.953l-18.373-244.409l104.532-44.127v-7.602
+			c-131.375,0-395.748,0-527.09,0v7.602l104.532,44.127C215.987,297.684,197.614,542.093,197.614,542.093z"/>
+	</g>
+</g>
+</svg>

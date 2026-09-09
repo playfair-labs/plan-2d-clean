@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="540" viewBox="0 0 800 216">
+  <rect width="800" height="216" fill="#0a0a0a"/>
+  <text x="32" y="118" fill="#00d7f3" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="86" font-weight="900" letter-spacing="-1.2">MYLES</text>
+  <text x="348" y="118" fill="#b4b4b4" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="86" font-weight="900" letter-spacing="-1.2">AV</text>
+  <text x="34" y="156" fill="#c5c5c5" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="500" letter-spacing="5.4">AUDIO VISUAL HIRE</text>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M548 62a48 48 0 0 1 0 92" stroke="#00d7f3" stroke-width="8"/>
+    <path d="M576 44a70 70 0 0 1 0 128" stroke="#00c4d8" stroke-width="8"/>
+    <path d="M604 26a92 92 0 0 1 0 164" stroke="#0892a4" stroke-width="8"/>
+  </g>
+</svg>
