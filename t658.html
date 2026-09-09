@@ -1001,8 +1001,6 @@ function solidsFor(it, opts={}){
     if (opts.ignoreAvops && o.type==='avops') return;
     // Lectern / AV kit may sit on stage or dance floor
     if (canStackOnSurface(it, o)) return;
-    // t660: same-type stage/dance sit on the tile gap — not a PAD solid
-    if ((it.type==='stage' || it.type==='dance') && o.type===it.type) return;
     if (o.type==='round' && !isLocked(o)) return;
     // locked rounds act as solids for packing around
     if (o.type==='round' && isLocked(o)) {
@@ -1044,14 +1042,6 @@ function isLegal(it, opts={}){
   if (!boxInPerimeter(b)) return false;
   for (const s of solidsFor(it, opts)) {
     if (overlap(b, inflate(s, PAD))) return false;
-  }
-  if (it.type==='stage' || it.type==='dance'){
-    const me=aabb(it);
-    for (const o of items){
-      if (o.id===it.id || o.type!==it.type) continue;
-      if (it.group && o.group && it.group===o.group) continue;
-      if (overlap(me, aabb(o))) return false;
-    }
   }
   for (const o of items){
     if (o.id===it.id) continue;
@@ -1229,19 +1219,14 @@ function placeRoundTableAt(x, z, preferNear){
 }
 function fitPermanentIntoPerimeter(it){
   let cur={...it};
-  const lockSize = it.type==='stage' || it.type==='dance';
   for (let k=0;k<24;k++){
     if (isLegal(cur,{ignoreMove:true})) return cur;
     const pushed=pushOutSelf(cur,{ignoreMove:true});
-    if (pushed){
-      if (!lockSize || (pushed.w===it.w && pushed.d===it.d)) return pushed;
-    }
-    if (lockSize) break; // hire tiles keep size — snapAttachDeck places them
+    if (pushed) return pushed;
     cur.w=Math.max(0.35, cur.w*0.94);
     cur.d=Math.max(0.35, cur.d*0.94);
   }
   clampIntoRoom(cur);
-  if (lockSize){ cur.w=it.w; cur.d=it.d; }
   return cur;
 }
 
@@ -1527,8 +1512,6 @@ function render(){
   HOLES.forEach(h=>{
     html+=`<rect x="${sx(h.x)-h.w*S/2}" y="${sy(h.z)-h.d*S/2}" width="${h.w*S}" height="${h.d*S}" fill="#3a3834"/>`;
   });
-  const stageTiles=[];
-  const danceTiles=[];
   items.forEach(it=>{
     const x=sx(it.x), y=sy(it.z);
     const lockMark = it.locked
@@ -1552,15 +1535,17 @@ function render(){
       html+=lockMark;
     } else if (it.type==='dance'){
       const w=it.w*S, d=it.d*S;
-      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#c4a056" fill-opacity="0.5" stroke="none" style="cursor:grab"/>`;
+      const stroke=it.id===selectedId?'#c9a227':'#8a6e2f';
+      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#c4a056" fill-opacity="0.5" stroke="${stroke}" stroke-width="${it.id===selectedId?2.6:1}" style="cursor:grab"/>`;
       html+=lockMark;
-      danceTiles.push(it);
     } else if (it.type==='stage'){
       const w=it.w*S, d=it.d*S;
-      // Fill only here — per-tile lines + centred Stage are drawn after every fill
-      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#d4d4d4" stroke="none" style="cursor:grab"/>`;
+      // Pin-thin outline; label inside top edge (away from pillar / lectern zone)
+      const stroke=it.id===selectedId?'#c9a227':'#8a8680';
+      const sw=it.id===selectedId?1.05:0.4;
+      html+=`<rect class="hit" data-id="${it.id}" x="${x-w/2}" y="${y-d/2}" width="${w}" height="${d}" fill="#d4d4d4" stroke="${stroke}" stroke-width="${sw}" style="cursor:grab"/>`;
+      html+=`<text x="${x}" y="${y-d/2+11}" text-anchor="middle" font-size="9" font-weight="650" fill="#5a5650" style="pointer-events:none">Stage</text>`;
       html+=lockMark;
-      stageTiles.push(it);
     } else if (it.type==='lectern'){
       // Parramatta plan-2d trap glyph; label ABOVE (not across body)
       const w=it.w*S, d=it.d*S;
@@ -1590,24 +1575,6 @@ function render(){
     if (!run) return;
     const path=drapeSquigglePath(sx(run.x0), sy(run.z0), sx(run.x1), sy(run.z1));
     html+=`<path d="${path}" fill="none" stroke="#1a1612" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"/>`;
-  });
-  // Per-tile lines after every fill so shared edges stay visible (not one solid mass)
-  stageTiles.forEach(it=>{
-    const x=sx(it.x), y=sy(it.z);
-    const w=it.w*S, d=it.d*S;
-    const stroke=it.id===selectedId?'#c9a227':'#6e6a64';
-    const sw=it.id===selectedId?2:1.45;
-    const inset=sw/2+0.8;
-    html+=`<rect x="${x-w/2+sw/2}" y="${y-d/2+sw/2}" width="${Math.max(0,w-sw)}" height="${Math.max(0,d-sw)}" fill="none" stroke="${stroke}" stroke-width="${sw}" style="pointer-events:none"/>`;
-    html+=`<clipPath id="stg-clip-${it.id}"><rect x="${x-w/2+inset}" y="${y-d/2+inset}" width="${Math.max(0,w-inset*2)}" height="${Math.max(0,d-inset*2)}"/></clipPath>`;
-    html+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="8" font-weight="650" fill="#5a5650" clip-path="url(#stg-clip-${it.id})" style="pointer-events:none">Stage</text>`;
-  });
-  danceTiles.forEach(it=>{
-    const x=sx(it.x), y=sy(it.z);
-    const w=it.w*S, d=it.d*S;
-    const stroke=it.id===selectedId?'#c9a227':'#8a6e2f';
-    const dsw=it.id===selectedId?2.2:1.15;
-    html+=`<rect x="${x-w/2+dsw/2}" y="${y-d/2+dsw/2}" width="${Math.max(0,w-dsw)}" height="${Math.max(0,d-dsw)}" fill="none" stroke="${stroke}" stroke-width="${dsw}" style="pointer-events:none"/>`;
   });
   const danceGroups={};
   items.filter(i=>i.type==='dance').forEach(it=>{
@@ -1681,44 +1648,27 @@ function recomputeAttachGroups(type, prefix){
 function recomputeStageGroups(){ recomputeAttachGroups('stage', 'stage-g'); }
 function recomputeDanceGroups(){ recomputeAttachGroups('dance', 'dance-g'); }
 function recomputeAvopsGroups(){ recomputeAttachGroups('avops', 'avops-g'); }
-function attachGapFor(type){
-  return type==='stage' ? STAGE_GAP : (type==='dance' ? DANCE_GAP : 0);
-}
 function snapAttachDeck(it){
-  // Rigid group snap — one delta for every member so a 4×4 / 3-deck mass does not collapse.
-  const SNAP=0.45;
-  const gap=attachGapFor(it.type);
-  const members=groupMembers(it);
-  const decks=members.filter(m=>m.type===it.type);
-  const mine={};
-  decks.forEach(d=>mine[d.id]=true);
-  const others=items.filter(o=>o.type===it.type && !mine[o.id]);
-  if (!others.length) return false;
-  // Drop-on-tile (rightmost column overlap) must still find the nearest legal attach.
-  const overlapping=others.some(o=>decks.some(d=>overlap(aabb(d), aabb(o))));
-  const limit=overlapping ? Math.max(it.w||1, it.d||1)*2+0.6 : SNAP;
-  let best=null, bestDist=limit;
-  for (const m of decks){
-    for (const o of others){
-      const cands=[
-        {dx:(o.x+(o.w+m.w)/2+gap)-m.x, dz:o.z-m.z},
-        {dx:(o.x-(o.w+m.w)/2-gap)-m.x, dz:o.z-m.z},
-        {dx:o.x-m.x, dz:(o.z+(o.d+m.d)/2+gap)-m.z},
-        {dx:o.x-m.x, dz:(o.z-(o.d+m.d)/2-gap)-m.z},
-      ];
-      for (const c of cands){
-        const dist=Math.hypot(c.dx, c.dz);
-        if (dist>=bestDist) continue;
-        const ok=members.every(mm=>{
-          const trial={...mm, x:mm.x+c.dx, z:mm.z+c.dz};
-          return isLegal(trial,{ignoreMove:true});
-        });
-        if (ok){ bestDist=dist; best=c; }
+  const SNAP=0.32;
+  const others=items.filter(o=>o.type===it.type && o.id!==it.id);
+  let best=null, bestDist=SNAP;
+  for (const o of others){
+    const cands=[
+      {x:o.x+(o.w+it.w)/2, z:o.z},
+      {x:o.x-(o.w+it.w)/2, z:o.z},
+      {x:o.x, z:o.z+(o.d+it.d)/2},
+      {x:o.x, z:o.z-(o.d+it.d)/2},
+    ];
+    for (const c of cands){
+      const dist=Math.hypot(c.x-it.x, c.z-it.z);
+      if (dist<bestDist){
+        const trial={...it, x:c.x, z:c.z};
+        if (isLegal(trial,{ignoreMove:true})){ bestDist=dist; best=c; }
       }
     }
   }
   if (!best) return false;
-  members.forEach(m=>{ m.x+=best.dx; m.z+=best.dz; });
+  it.x=best.x; it.z=best.z;
   return true;
 }
 function snapStageDeck(it){
@@ -2072,10 +2022,10 @@ function settle(){
     }
   }
   if (it.type==='stage' || it.type==='dance' || it.type==='avops'){
-    if (it.type==='stage') snapStageDeck(it);
-    else if (it.type==='dance') snapDanceTile(it);
-    else {
-      for (const m of groupMembers(it)) snapAvopsDesk(m);
+    for (const m of groupMembers(it)){
+      if (it.type==='stage') snapStageDeck(m);
+      else if (it.type==='dance') snapDanceTile(m);
+      else snapAvopsDesk(m);
     }
     if (it.type==='stage') recomputeStageGroups();
     else if (it.type==='dance') recomputeDanceGroups();
@@ -2456,15 +2406,16 @@ function stampKitAt(kind, x, z){
   if (kind==='stage'){
     stageSeq++;
     it = makeStageDeck('stage'+stageSeq, x, z);
-    snapStageDeck(it);
     it = fitPermanentIntoPerimeter(it);
+    // snap to nearby decks on place
     snapStageDeck(it);
+    recomputeStageGroups();
   } else if (kind==='dance'){
     danceSeq++;
     it = makeDanceTile('dance'+danceSeq, x, z);
-    snapDanceTile(it);
     it = fitPermanentIntoPerimeter(it);
     snapDanceTile(it);
+    recomputeDanceGroups();
   } else {
     it = { id:kind+seq, kind:'permanent', type:def.type, x, z, w:def.w, d:def.d, label:def.label, locked:false };
     if (def.drape) it.drape = def.drape;
@@ -2479,8 +2430,6 @@ function stampKitAt(kind, x, z){
   }
   items.push(it);
   if (it.type==='avops') recomputeAvopsGroups();
-  if (kind==='stage') recomputeStageGroups();
-  else if (kind==='dance') recomputeDanceGroups();
   yieldOverlappingOnly(it);
   untangleTables();
   if (liveMax){ addUntilFull(); renumberTables(); }
@@ -2488,15 +2437,8 @@ function stampKitAt(kind, x, z){
   selectedSeat=null;
   clearPlaceKit();
   render();
-  if (kind==='stage' || kind==='dance'){
-    const joined=groupMembers(it).length;
-    const unit=kind==='stage' ? 'decks' : 'tiles';
-    const one=kind==='stage' ? 'Stage deck' : 'Dance tile';
-    setStatus(joined>1 ? ((kind==='stage'?'Stage':'Dance')+' snapped · '+joined+' '+unit+' move as one') : one);
-  } else {
-    const placedLab = kitLabel(it) || (it.type==='trestle' ? 'Trestle' : (it.type==='smalltable' ? 'Small table' : it.type));
-    setStatus('Placed · '+placedLab);
-  }
+  const placedLab = kitLabel(it) || (it.type==='trestle' ? 'Trestle' : (it.type==='smalltable' ? 'Small table' : it.type));
+  setStatus('Placed · '+placedLab);
 }
 
 /* --- brief sync across UI panes --- */
@@ -2799,7 +2741,7 @@ document.querySelectorAll('.ui-tog button').forEach(b=>{
 });
 
 
-window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,snapStageDeck,snapAttachDeck,attachGapFor,STAGE_DECK,STAGE_GAP,DANCE_GAP,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel,setAvopsDrape};
+window.__plan={getItems:()=>items.map(i=>({...i})),isLegal:(it,o)=>isLegal(it,o||{}),runMaxPax,packHexSync,packSolidsFromItems,renumberTables,pruneIllegalTables,nudgeIllegalTables,holeSolids,HOLE_KEEP,HOLES,MIN_C2C,BODY_D,BODY_R,SEATS_PER_TABLE,TABLE_D,sx,sy,fromSvg,S,OX,OY,deleteSelected,deleteSeat,effectiveSeats,roomSeats,removedSeatsOf,DANCE_TILE,makeDanceTile,recomputeDanceGroups,snapDanceTile,canPlaceKitOnSurface,isPlaceableKitType,TRESTLE,STAGE_STEPS,COFFEE_CART,TUB_CHAIR,STOOL,SMALL_TABLE,DRAPE_OFF,avopsDrapeRun,avopsDrapeSide,drapeSquigglePath,snapAvopsDesk,recomputeAvopsGroups,snapStepsToStage,stampKitAt,kitLabel,setAvopsDrape};
 fillKitHosts();
 wireSharedActions();
 bindBrief();
