@@ -11,6 +11,7 @@ import {
 } from '../engine/priorities.mjs';
 import {
   ROLES, MEALS, mealById, buildGuestList, assignGuests, guestAtSeat, mealCounts, roleById,
+  orphanSeat, zeusTap, ebbyTap,
 } from './day-of.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -596,14 +597,16 @@ function tierAt(wx, wz) {
 }
 
 function chairPaint(wx, wz) {
-  if (state.dayRole === 'av') return { fill: '#d8d2c8', stroke: '#6a6660' };
+  const a = guestAtSeat(state.dayAssign, wx, wz, 320);
+  if (a && a.guest.joke === 'zeus') return { fill: 'url(#zeusFill)', stroke: '#111', guest: a, joke: 'zeus' };
+  if (a && a.guest.joke === 'ebby') return { fill: '#c43c2b', stroke: '#3d0d08', guest: a, joke: 'ebby' };
+  if (state.dayRole === 'av') return { fill: '#d8d2c8', stroke: '#6a6660', guest: a };
   if (state.dayLayer === 'meals') {
-    const a = guestAtSeat(state.dayAssign, wx, wz);
     const m = a ? mealById(a.guest.meal) : null;
     return { fill: m ? m.color : '#d8d2c8', stroke: m ? m.stroke : '#6a6660', guest: a };
   }
   const tier = tierAt(wx, wz);
-  return { fill: tier ? tier.color : 'none', stroke: tier ? tier.stroke : '#111', guest: guestAtSeat(state.dayAssign, wx, wz) };
+  return { fill: tier ? tier.color : 'none', stroke: tier ? tier.stroke : '#111', guest: a };
 }
 
 function drawChair(g, wx, wz, ang, s) {
@@ -624,6 +627,12 @@ function drawChair(g, wx, wz, ang, s) {
   grp.appendChild(el('path', { d: 'M14.63,-13.77L7.19,-14.97L-0.01,-15.21L-7.21,-14.97L-14.65,-13.77' }));
   grp.appendChild(el('path', { d: 'M14.63,-16.65L7.19,-17.85L-0.01,-18.09L-7.21,-17.85L-14.65,-16.65' }));
   g.appendChild(grp);
+  if (paint.joke === 'ebby') {
+    g.appendChild(el('text', {
+      x: c.x, y: c.y + 4, 'text-anchor': 'middle', 'font-size': String(Math.max(9, 12 * k)),
+      style: 'pointer-events:none',
+    }, ['🌶']));
+  }
   if (on) {
     g.appendChild(el('circle', {
       cx: c.x, cy: c.y, r: 11 * k, fill: 'none', stroke: '#c9a227', 'stroke-width': '2',
@@ -752,6 +761,11 @@ function draw() {
 
   const defs = el('defs');
   defs.innerHTML = $('chair-symbol').innerHTML;
+  const grad = el('linearGradient', { id: 'zeusFill', x1: '0', y1: '0', x2: '1', y2: '1' });
+  [['0%', '#ff3b30'], ['16%', '#ff9500'], ['33%', '#ffcc00'], ['50%', '#34c759'], ['66%', '#007aff'], ['83%', '#5856d6'], ['100%', '#af52de']].forEach(([o, col]) => {
+    grad.appendChild(el('stop', { offset: o, 'stop-color': col }));
+  });
+  defs.appendChild(grad);
   svg.appendChild(defs);
 
   const g = el('g', { id: 'world' });
@@ -938,6 +952,9 @@ function draw() {
   for (const it of state.items) {
     if (it.type !== 'chair') continue;
     drawChair(g, it.x, it.z, it.rot || 0, s);
+  }
+  for (const a of state.dayAssign || []) {
+    if (a.seat && a.seat.joke) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0, s);
   }
   drawServicePaths(g);
 
@@ -1126,10 +1143,21 @@ function fillDayChrome() {
     list.innerHTML = rows.map((g) => {
       const m = mealById(g.meal);
       const on = state.selectedGuest === g.id ? ' on' : '';
-      return `<button type="button" data-guest="${g.id}" class="${on.trim()}"><span class="dot" style="background:${m.color}"></span><span class="who">${g.vip ? '★ ' : ''}${g.name}</span><span class="meal">${m.label}${g.note ? ' · ' + g.note : ''}</span></button>`;
+      const dot = g.joke === 'zeus'
+        ? '<span class="dot zeus"></span>'
+        : g.joke === 'ebby'
+          ? '<span class="dot">🌶</span>'
+          : `<span class="dot" style="background:${m.color}"></span>`;
+      const meal = g.joke === 'zeus' ? 'find him' : g.joke === 'ebby' ? 'chilli' : `${m.label}${g.note ? ' · ' + g.note : ''}`;
+      return `<button type="button" data-guest="${g.id}" class="${on.trim()}">${dot}<span class="who">${g.vip ? '★ ' : ''}${g.name}</span><span class="meal">${meal}</span></button>`;
     }).join('');
     list.querySelectorAll('[data-guest]').forEach((b) => {
       b.onclick = () => {
+        const g = state.dayGuests.find((x) => x.id === b.dataset.guest);
+        if (g && g.joke) {
+          const tap = g.joke === 'zeus' ? zeusTap() : ebbyTap();
+          state.status = g.name + ' · ' + tap.meal + ' · ' + tap.line;
+        }
         state.selectedGuest = state.selectedGuest === b.dataset.guest ? null : b.dataset.guest;
         render();
       };
@@ -1209,7 +1237,7 @@ function formatDate(iso) {
 function refreshDayOf() {
   const seats = state.scored?.seats || [];
   state.dayGuests = buildGuestList(seats.length);
-  state.dayAssign = assignGuests(seats, state.dayGuests);
+  state.dayAssign = assignGuests(seats, state.dayGuests, orphanSeat(room()));
 }
 
 function render() {

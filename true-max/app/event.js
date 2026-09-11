@@ -8,7 +8,7 @@ import { pack } from '../engine/pack.mjs';
 import { scoreLayout, TIERS } from '../engine/seat-score.mjs';
 import { DENSITIES } from '../engine/constraints.mjs';
 import { viewRoom } from '../engine/house-factors.mjs';
-import { buildGuestList, assignGuests, guestAtSeat, mealById } from './day-of.mjs';
+import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap } from './day-of.mjs';
 import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick } from './av-hang.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -158,7 +158,7 @@ function loadAndDraw() {
   });
   const scored = scoreLayout(viewRoom(room, { show: 'all' }), style, packed, DENSITIES.standard);
   const guests = buildGuestList(scored.seats.length, 9000 + s.id.length);
-  const assign = assignGuests(scored.seats, guests);
+  const assign = assignGuests(scored.seats, guests, orphanSeat(room));
   const hang = (s.style === 'boardroom') ? null : buildHang(room, packed);
   const rec = { packed, scored, assign, style, room, hang };
   cache.set(key, rec);
@@ -206,9 +206,11 @@ function el(tag, attrs, kids) {
 }
 
 function chairColor(wx, wz) {
-  if (state.role === 'av') return { fill: '#d8d2c8', stroke: '#6a6660' };
+  const a = guestAtSeat(state.assign, wx, wz, 320);
+  if (a && a.guest.joke === 'zeus') return { fill: 'url(#zeusFill)', stroke: '#111', guest: a, joke: 'zeus' };
+  if (a && a.guest.joke === 'ebby') return { fill: '#c43c2b', stroke: '#3d0d08', guest: a, joke: 'ebby' };
+  if (state.role === 'av') return { fill: '#d8d2c8', stroke: '#6a6660', guest: a };
   if (state.role === 'catering') {
-    const a = guestAtSeat(state.assign, wx, wz);
     const m = a ? mealById(a.guest.meal) : null;
     return { fill: m ? m.color : '#d8d2c8', stroke: m ? m.stroke : '#6a6660', guest: a };
   }
@@ -219,7 +221,7 @@ function chairColor(wx, wz) {
     if (d < bd) { bd = d; best = s; }
   }
   const t = best?.tier;
-  return { fill: t ? t.color : 'none', stroke: t ? t.stroke : '#111', guest: guestAtSeat(state.assign, wx, wz) };
+  return { fill: t ? t.color : 'none', stroke: t ? t.stroke : '#111', guest: a };
 }
 
 function drawChair(g, wx, wz, ang) {
@@ -239,6 +241,12 @@ function drawChair(g, wx, wz, ang) {
   });
   grp.appendChild(el('rect', { x: '-14.6', y: '-16.9', width: '29.2', height: '30.7', rx: '2.2' }));
   g.appendChild(grp);
+  if (paint.joke === 'ebby') {
+    g.appendChild(el('text', {
+      x: p.x, y: p.y + 4, 'text-anchor': 'middle', 'font-size': String(Math.max(9, 13 * k)),
+      style: 'pointer-events:none',
+    }, ['🌶']));
+  }
 }
 
 function draw() {
@@ -250,6 +258,13 @@ function draw() {
   const W = svg.clientWidth || window.innerWidth;
   const H = svg.clientHeight || window.innerHeight;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const defs = el('defs');
+  const grad = el('linearGradient', { id: 'zeusFill', x1: '0', y1: '0', x2: '1', y2: '1' });
+  [['0%', '#ff3b30'], ['16%', '#ff9500'], ['33%', '#ffcc00'], ['50%', '#34c759'], ['66%', '#007aff'], ['83%', '#5856d6'], ['100%', '#af52de']].forEach(([o, c]) => {
+    grad.appendChild(el('stop', { offset: o, 'stop-color': c }));
+  });
+  defs.appendChild(grad);
+  svg.appendChild(defs);
   const g = el('g', { id: 'world' });
   svg.appendChild(g);
 
@@ -326,6 +341,9 @@ function draw() {
   drawHang(g, false);
   for (const seat of state.scored?.seats || []) {
     drawChair(g, seat.x, seat.z, seat.rot || 0);
+  }
+  for (const a of state.assign || []) {
+    if (a.seat && a.seat.joke) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0);
   }
   drawHang(g, true);
 }
@@ -549,6 +567,15 @@ function setRole(role) {
 }
 
 function onSeatTap(wx, wz) {
+  const jokeHit = guestAtSeat(state.assign, wx, wz, 520);
+  if (jokeHit && jokeHit.guest.joke) {
+    state.selected = jokeHit.guest.id;
+    const tap = jokeHit.guest.joke === 'zeus' ? zeusTap() : ebbyTap();
+    $('sheet').innerHTML = `<b>${jokeHit.guest.name}</b><span>${tap.meal}</span><span>${tap.line}</span>`;
+    $('sheet').classList.add('on');
+    draw();
+    return;
+  }
   if (state.role === 'av') {
     const kit = hitKit(wx, wz);
     if (kit && kit.type === 'avops') {
