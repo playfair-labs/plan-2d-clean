@@ -10,6 +10,7 @@ import { DENSITIES } from '../engine/constraints.mjs';
 import { viewRoom } from '../engine/house-factors.mjs';
 import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap, cameraTap } from './day-of.mjs';
 import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick } from './av-hang.mjs';
+import { crewWit } from './crew-wit.mjs';
 
 const $ = (id) => document.getElementById(id);
 
@@ -73,6 +74,7 @@ const state = {
   cam: { x: 0, y: 0, k: 1 },
   hang: null,
   skirtSide: 'n',
+  wit: false,
 };
 
 const cache = new Map();
@@ -537,6 +539,7 @@ function showAvSheet(it) {
     html = `<b>Ebby</b><span>${tap.meal}</span><span>${tap.line}</span>`;
     const run = (hang.cables || []).find((c) => c.tag === 'XLR camera');
     if (run) html += `<span>XLR ${run.stock.join(' + ')} m · still no lunch</span>`;
+    if (state.wit) html += `<span>${crewWit('camera')}</span>`;
     $('sheet').innerHTML = html;
     $('sheet').classList.add('on');
     return;
@@ -563,6 +566,10 @@ function showAvSheet(it) {
   if (run && run.stock) html += `<span>${run.tag} · pull ${run.stock.join(' + ')} m</span>`;
   html += `<span>Blue Cat5 · purple DMX · black XLR · dashed power. Gold stripe = gaff — one lift if it fails.</span>`;
   if (pick) html += `<span>Warehouse pick: ${pick}</span>`;
+  if (state.wit) {
+    const kind = it && it.type === 'powerpoint' ? 'powerpoint' : (it && it.type) || 'default';
+    html += `<span>${crewWit(kind)}</span>`;
+  }
   $('sheet').innerHTML = html;
   $('sheet').classList.add('on');
 }
@@ -695,9 +702,21 @@ function boot() {
     else { location.hash = ''; show('home'); }
   };
   $('pickBack').onclick = () => { location.hash = ''; show('home'); };
-  document.querySelectorAll('.dock button').forEach((b) => {
+  document.querySelectorAll('.dock button[data-role]').forEach((b) => {
     b.onclick = () => setRole(b.dataset.role);
   });
+  const witBtn = $('witBtn');
+  if (witBtn) {
+    try { state.wit = localStorage.getItem('parra-wit') === '1'; } catch (e) {}
+    witBtn.classList.toggle('on', state.wit);
+    witBtn.setAttribute('aria-pressed', state.wit ? 'true' : 'false');
+    witBtn.onclick = () => {
+      state.wit = !state.wit;
+      try { localStorage.setItem('parra-wit', state.wit ? '1' : '0'); } catch (e) {}
+      witBtn.classList.toggle('on', state.wit);
+      witBtn.setAttribute('aria-pressed', state.wit ? 'true' : 'false');
+    };
+  }
   $('sheet').onclick = () => { $('sheet').classList.remove('on'); state.selected = null; draw(); };
   bindMap();
   window.addEventListener('hashchange', route);
