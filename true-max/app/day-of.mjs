@@ -67,32 +67,50 @@ const EBBY_LINES = [
   { meal: 'Green salad', line: 'Looks innocent. It isn’t. He never is.' },
 ];
 
-function pickLine(lines) {
-  return lines[Math.floor(Math.random() * lines.length)];
+function stepper(lines) {
+  let i = 0;
+  return () => {
+    const line = lines[i % lines.length];
+    i += 1;
+    return line;
+  };
 }
 
-export function zeusTap() {
-  return pickLine(ZEUS_LINES);
-}
-export function ebbyTap() {
-  return pickLine(EBBY_LINES);
-}
+export const zeusTap = stepper(ZEUS_LINES);
+export const ebbyTap = stepper(EBBY_LINES);
 
 const CAMERA_LINES = [
   { meal: 'No lunch', line: 'Sorry Al. PowerPoint ate the clicker. Bill says it’s a feature.' },
+  { meal: 'No lunch', line: 'You’re not on the call sheet. Why is the camera here.' },
+  { meal: 'No lunch', line: 'No camera on this job. You brought it anyway.' },
+  { meal: 'No lunch', line: 'Day off. You showed up with a camera. Of course you did.' },
+  { meal: 'No lunch', line: 'Brock said get in there. Cables weren’t dressed. Your hair knows.' },
+  { meal: 'No lunch', line: 'Don’t give me excuses just because you got electrocuted. Roll.' },
   { meal: 'No lunch', line: 'They moved you. Excel had a circular reference. So did the run sheet.' },
   { meal: 'No lunch', line: 'Word crashed. The file was FINAL_final2. Your plate went to the breakout.' },
   { meal: 'No lunch', line: 'PC update at doors. Gates sends his regards.' },
-  { meal: 'No lunch', line: 'Outlook just mailed the cue sheet to the whole hotel. Stay on the riser.' },
   { meal: 'No lunch', line: 'Clip’s on a USB. The PC can’t see it. Obviously.' },
   { meal: 'No lunch', line: 'They need the logo bigger. In Comic Sans. From a PC. Skip the meal.' },
   { meal: 'No lunch', line: 'Safe Mode. Blue screen. Salad’s in a meeting that doesn’t exist.' },
-  { meal: 'No lunch', line: 'Macros in the playlist. You hate PCs. They know. They did it anyway.' },
-  { meal: 'No lunch', line: 'Last-minute move. Over the camera. Because a slide wouldn’t advance. Thanks Bill.' },
+  { meal: 'No lunch', line: 'Last-minute move. Over the camera. Slide wouldn’t advance. Thanks Bill.' },
+  { meal: 'No lunch', line: 'Never a good meal. That’s the recurring bit. You knew.' },
 ];
 
-export function cameraTap() {
-  return pickLine(CAMERA_LINES);
+export const cameraTap = stepper(CAMERA_LINES);
+
+/** Corner camera even when the job has none. Forever Al. 3D costumes later. */
+export function alCameraSpot(room) {
+  const bb = bboxOf(room.room);
+  return {
+    type: 'camera',
+    x: bb.maxX - 720,
+    z: bb.minZ + 920,
+    w: 280,
+    d: 220,
+    label: 'Camera',
+    joke: true,
+    kind: 'av',
+  };
 }
 
 /** Tiny joke chair against a column or wall. Does not come out of the pack. */

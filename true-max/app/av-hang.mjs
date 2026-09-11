@@ -5,6 +5,7 @@
  */
 import { HIRE } from '../engine/world.mjs';
 import { bboxOf } from '../engine/geom.mjs';
+import { alCameraSpot } from './day-of.mjs';
 
 const SKIRT_SIDES = ['n', 'e', 's', 'w'];
 export function nextSkirt(side) {
@@ -286,6 +287,14 @@ export function buildHang(room, packed) {
   ];
 
   return { kit, cables, drapes: drapeLines(room), desk, block, patch, distro, powers, gaffs };
+}
+
+/** Cameraman is always Al. If the hang has no camera, he still brought one. */
+export function ensureAlCamera(room, hang) {
+  const base = hang || { kit: [], cables: [], drapes: [], desk: null, gaffs: [], powers: [] };
+  const kit = (base.kit || []).slice();
+  if (!kit.some((k) => k.type === 'camera')) kit.push(alCameraSpot(room));
+  return { ...base, kit };
 }
 
 export function xlrSummary(cables) {

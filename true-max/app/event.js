@@ -9,7 +9,7 @@ import { scoreLayout, TIERS } from '../engine/seat-score.mjs';
 import { DENSITIES } from '../engine/constraints.mjs';
 import { viewRoom } from '../engine/house-factors.mjs';
 import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap, cameraTap } from './day-of.mjs';
-import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick } from './av-hang.mjs';
+import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick, ensureAlCamera } from './av-hang.mjs';
 import { crewWit } from './crew-wit.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -160,8 +160,8 @@ function loadAndDraw() {
   });
   const scored = scoreLayout(viewRoom(room, { show: 'all' }), style, packed, DENSITIES.standard);
   const guests = buildGuestList(scored.seats.length, 9000 + s.id.length);
-  const hang = (s.style === 'boardroom') ? null : buildHang(room, packed);
-  const cam = hang && (hang.kit || []).find((k) => k.type === 'camera');
+  const hang = ensureAlCamera(room, s.style === 'boardroom' ? null : buildHang(room, packed));
+  const cam = (hang.kit || []).find((k) => k.type === 'camera');
   const assign = assignGuests(scored.seats, guests, orphanSeat(room), cam);
   const rec = { packed, scored, assign, style, room, hang };
   cache.set(key, rec);
@@ -503,9 +503,13 @@ function drawHang(g, cablesOnly) {
         fill: '#111',
       }));
       g.appendChild(el('text', {
-        x: c.x, y: c.y + 22, 'text-anchor': 'middle', 'font-size': '12',
+        x: c.x, y: c.y + 22, 'text-anchor': 'middle', 'font-size': '13',
         style: 'pointer-events:none',
       }, ['🌶']));
+      g.appendChild(el('text', {
+        x: c.x, y: c.y - 16, 'text-anchor': 'middle', 'font-size': '9', 'font-weight': '800', fill: '#c43c2b',
+        style: 'pointer-events:none',
+      }, ['Al']));
     }
     if (av && it.label && it.type !== 'riser' && it.type !== 'patch') {
       const c = toScreen(it.x, it.z);
