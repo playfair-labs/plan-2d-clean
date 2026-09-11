@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Priorities for your people — QT Parramatta</title>
+<style>
+  :root {
+    --bg:#161513; --panel:#1c1b19; --ink:#eceae6; --muted:#8a8680;
+    --line:#2c2a26; --soft:#242220; --accent:#c9a227;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  .top {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .top img { height: 36px; }
+  .top .titles { flex: 1; min-width: 0; }
+  .top strong { display: block; font-size: 14px; }
+  .top small { color: var(--muted); }
+  .myles { height: 32px; margin-left: auto; }
+  .shell { flex: 1; display: flex; min-height: 0; }
+  .rail {
+    width: 320px; flex-shrink: 0; background: var(--panel);
+    border-right: 1px solid var(--line); padding: 12px; overflow: auto;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .rail label { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .rail input, .rail select {
+    width: 100%; background: var(--soft); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px;
+  }
+  .door { display: flex; flex-direction: column; gap: 4px; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  button {
+    background: var(--soft); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  button:hover { border-color: #4a463e; }
+  button.on, #maxBtn { color: var(--accent); border-color: #3f3820; background: #221e14; }
+  #kitList { display: flex; flex-direction: column; gap: 2px; }
+  #kitList button { text-align: left; background: transparent; }
+  .status { font-size: 13px; color: var(--accent); min-height: 2.4em; }
+  .pri {
+    background: var(--soft); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px;
+  }
+  .pri h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0; text-transform: none; }
+  .pri .lede { font-size: 11px; color: var(--muted); line-height: 1.35; margin: 0 0 8px; }
+  .pri .blurb { font-size: 12px; color: var(--ink); line-height: 1.35; margin: 6px 0 8px; min-height: 2.6em; }
+  .pri input[type=range] { width: 100%; accent-color: var(--accent); }
+  .pri .ends { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 2px; gap: 8px; }
+  .pri .ends span:last-child { text-align: right; }
+  .map { flex: 1; min-width: 0; min-height: 0; background: #121110; position: relative; }
+  #plan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #efeae0; }
+  .print-letter { display: none; }
+  .day {
+    background: var(--soft); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .day h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--accent); }
+  .day .lede { font-size: 11px; color: var(--muted); line-height: 1.35; margin: 0; }
+  .day .job { font-size: 12px; line-height: 1.35; margin: 0; }
+  #guestList {
+    max-height: 168px; overflow: auto; font-size: 11px;
+    border: 1px solid var(--line); border-radius: 8px;
+  }
+  #guestList button {
+    display: flex; width: 100%; text-align: left; gap: 6px; align-items: center;
+    padding: 5px 8px; border: none; border-radius: 0; background: transparent;
+    font-size: 11px; font-weight: 500;
+  }
+  #guestList button:hover, #guestList button.on { background: #2a2722; }
+  #guestList .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  #guestList .who { flex: 1; min-width: 0; }
+  #guestList .meal { color: var(--muted); }
+  @media print {
+    @page { size: A3 landscape; margin: 12mm; }
+    .rail, .top button { display: none !important; }
+    .top { background: #fff; color: #1a1612; border: none; }
+    body, .map, #plan { background: #fff !important; }
+    .print-letter { display: block; }
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <img src="assets/qt-parramatta-logo.svg" alt="QT Parramatta" />
+    <div class="titles">
+      <strong id="titleLine">Grand Ballroom</strong>
+      <small id="subLine">Cabaret</small>
+    </div>
+    <img class="myles" src="assets/myles-av-logo.svg" alt="Myles AV" />
+  </div>
+  <div class="shell">
+    <aside class="rail">
+      <div class="door"><label>Client / event</label><input id="clientIn" /></div>
+      <div class="door"><label>Date</label><input id="dateIn" type="date" /></div>
+      <div class="day" id="dayBox">
+        <h3>On the day</h3>
+        <p class="lede">Same map. Tap who you are — catering, AV, or house.</p>
+        <div class="door"><label>Who are you</label>
+          <div class="row" id="roleRow">
+            <button type="button" data-role="house" class="on">House</button>
+            <button type="button" data-role="catering">Catering</button>
+            <button type="button" data-role="av">AV</button>
+          </div>
+        </div>
+        <div class="door"><label>Show on the chairs</label>
+          <div class="row" id="layerRow">
+            <button type="button" data-layer="seats" class="on">Platinum seats</button>
+            <button type="button" data-layer="meals">Meals</button>
+          </div>
+        </div>
+        <p class="job" id="dayJob"></p>
+        <div id="mealChips" class="row" style="font-size:11px"></div>
+        <div id="guestList"></div>
+      </div>
+      <div class="door"><label>Room</label><select id="roomSel"></select></div>
+      <button id="frontCutBtn" aria-pressed="false">Front cut · off</button>
+      <button id="vGuideBtn" hidden>Add vertical guide</button>
+      <div class="door"><label>Style</label><select id="styleSel"></select></div>
+      <div class="pri" id="priBox">
+        <h3 id="priTitle">Priorities for your people</h3>
+        <p class="lede" id="priLede">You flew them in. Nudge what you protect. Tables move. Chairs recolour.</p>
+        <div class="door"><label>Protect tonight</label><select id="priSel"></select></div>
+        <p class="blurb" id="priBlurb"></p>
+        <input id="priRange" type="range" min="0" max="100" value="85" step="1" />
+        <div class="ends"><span id="priLeft"></span><span id="priRight"></span></div>
+      </div>
+      <div class="door"><label>Edge gap (mm)</label><input id="gapIn" type="number" step="10" min="0" max="2700" /></div>
+      <div class="door"><label>Guests (meals)</label><input id="guestIn" type="number" min="1" step="1" placeholder="Any number — 100, 110, 120…" /></div>
+      <div class="row" id="guestChips">
+        <button type="button" data-guests="100">100</button>
+        <button type="button" data-guests="110">110</button>
+        <button type="button" data-guests="120">120</button>
+        <button type="button" data-guests="130">130</button>
+      </div>
+      <div id="vipChips" class="row" style="font-size:11px"></div>
+      <div id="serviceChips" class="row" style="font-size:11px"></div>
+      <p id="serviceCaption" style="color:var(--muted);font-size:11px;margin:0;line-height:1.35"></p>
+      <div class="row" id="serviceViewRow" hidden>
+        <button type="button" id="prefPathBtn" class="on">Preferred paths</button>
+        <button type="button" id="wanderPathBtn">Wander paths</button>
+      </div>
+      <p id="scaleCaption" style="color:var(--muted);font-size:11px;margin:0;line-height:1.35"></p>
+      <div class="row">
+        <button id="maxBtn">Max PAX</button>
+        <button id="serviceHeatBtn">Service heat</button>
+        <button id="screenKeep">Screen keep</button>
+        <button id="clearBtn">Clear</button>
+      </div>
+      <div class="row">
+        <button id="addBtn">Add table</button>
+        <button id="delBtn">Delete</button>
+        <button id="undoBtn">Undo</button>
+        <button id="pdfBtn">PDF</button>
+      </div>
+      <div>Tables <strong id="maxRead">—</strong> · Guests <strong id="guestRead">—</strong> · Gap <span id="gapRead"></span></div>
+      <div class="status" id="status"></div>
+      <div class="door"><label>Place</label><div id="kitList"></div></div>
+      <button id="proofBtn">Proof index</button>
+      <p style="color:var(--muted);font-size:11px">1800 mm rounds · banquet 10 / cabaret 8 · wall min 910 · table gap starts 1520. Max closes at 25 mm scan.</p>
+    </aside>
+    <div class="map">
+      <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+  <div id="chair-symbol" hidden>
+    <g id="chair" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M14.63,-13.77L7.19,-14.97L-0.01,-15.21L-7.21,-14.97L-14.65,-13.77"/>
+      <path d="M11.27,13.59L12.95,13.11L13.91,11.91L14.39,10.47"/>
+      <path d="M14.63,10.47L14.63,-16.89"/>
+      <path d="M14.63,-16.65L7.19,-17.85L-0.01,-18.09L-7.21,-17.85L-14.65,-16.65"/>
+      <path d="M-14.65,-16.89L-14.65,10.47"/>
+      <path d="M-14.41,10.47L-13.93,11.91L-12.73,13.11L-11.29,13.59"/>
+      <path d="M-11.29,13.83L11.27,13.83"/>
+    </g>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#111111" />
+<title>Pacific Partners Summit — QT Parramatta</title>
+<style>
+  :root {
+    --bg: #111111;
+    --ink: #f4efe6;
+    --muted: #9a948a;
+    --gold: #c9a227;
+    --line: #2a2722;
+    --card: #1a1917;
+    --map: #efeae0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+  }
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .screen.on { display: flex; }
+
+  header.brand {
+    display: flex; align-items: center; gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 18px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  header.brand img { height: 28px; }
+  header.brand .myles { height: 22px; margin-left: auto; }
+  .home { overflow: auto; padding: 18px 18px calc(24px + env(safe-area-inset-bottom)); }
+  .kicker {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin: 0 0 6px;
+  }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 6px; }
+  .lede { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+
+  .slot {
+    display: block; width: 100%; text-align: left;
+    background: var(--card); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 14px; padding: 16px 16px 14px; margin: 0 0 10px;
+    cursor: pointer;
+  }
+  .slot:active { border-color: var(--gold); }
+  .slot .when { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+  .slot h2 { font-size: 18px; font-weight: 600; margin: 4px 0 4px; }
+  .slot p { margin: 0; color: var(--muted); font-size: 13px; }
+
+  .maphead {
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(8px + env(safe-area-inset-top)) 10px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .back {
+    width: 40px; height: 40px; border: 0; background: transparent; color: var(--ink);
+    font-size: 28px; line-height: 1; cursor: pointer;
+  }
+  .maphead .who { min-width: 0; flex: 1; }
+  .maphead strong { display: block; font-size: 15px; }
+  .maphead small { color: var(--muted); font-size: 12px; }
+
+  .stage { flex: 1; min-height: 0; position: relative; background: #0c0c0b; touch-action: none; }
+  #plan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--map); touch-action: none; }
+
+  .dock {
+    display: flex; gap: 0;
+    padding: 6px 10px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line); background: #141311;
+  }
+  .dock button {
+    flex: 1; border: 0; background: transparent; color: var(--muted);
+    font-size: 13px; font-weight: 600; padding: 10px 6px; cursor: pointer;
+  }
+  .dock button.on { color: var(--gold); }
+
+  .sheet {
+    position: absolute; left: 12px; right: 12px; bottom: calc(58px + env(safe-area-inset-bottom));
+    background: #1c1b19; border: 1px solid var(--line); border-radius: 14px;
+    padding: 12px 14px; display: none;
+  }
+  .sheet.on { display: block; }
+  .sheet b { display: block; font-size: 15px; }
+  .sheet span { color: var(--muted); font-size: 13px; }
+
+  .hint {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(17,17,17,.72); color: var(--ink); font-size: 11px;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 6px 10px; border-radius: 999px; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <section class="screen on" id="home">
+    <header class="brand">
+      <img src="assets/qt-parramatta-logo.svg" alt="QT Parramatta" />
+      <img class="myles" src="assets/myles-av-logo.svg" alt="Myles AV" />
+    </header>
+    <div class="home">
+      <p class="kicker">Saturday 12 September 2026</p>
+      <h1>Pacific Partners Summit</h1>
+      <p class="lede">QT Parramatta · tap a time, pinch the room.</p>
+      <div id="slots"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="picker">
+    <header class="brand">
+      <button class="back" id="pickBack" aria-label="Back">‹</button>
+      <div>
+        <strong id="pickTitle">Breakouts</strong>
+        <div class="lede" style="margin:0" id="pickLede"></div>
+      </div>
+      <img class="myles" src="assets/myles-av-logo.svg" alt="" />
+    </header>
+    <div class="home" id="pickList"></div>
+  </section>
+
+  <section class="screen" id="map">
+    <div class="maphead">
+      <button class="back" id="mapBack" aria-label="Back">‹</button>
+      <div class="who">
+        <strong id="mapTitle"></strong>
+        <small id="mapSub"></small>
+      </div>
+      <img src="assets/qt-parramatta-logo.svg" alt="" style="height:22px" />
+    </div>
+    <div class="stage" id="stage">
+      <svg id="plan" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="hint" id="hint">Pinch to zoom · drag to pan</div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+    <nav class="dock">
+      <button type="button" data-role="house" class="on">House</button>
+      <button type="button" data-role="catering">Catering</button>
+      <button type="button" data-role="av">AV</button>
+    </nav>
+  </section>
+  <script type="module" src="event.js"></script>
+</body>
+</html>
