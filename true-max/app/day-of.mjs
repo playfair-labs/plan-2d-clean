@@ -78,6 +78,23 @@ export function ebbyTap() {
   return pickLine(EBBY_LINES);
 }
 
+const CAMERA_LINES = [
+  { meal: 'No lunch', line: 'Sorry Al. PowerPoint ate the clicker. Bill says it’s a feature.' },
+  { meal: 'No lunch', line: 'They moved you. Excel had a circular reference. So did the run sheet.' },
+  { meal: 'No lunch', line: 'Word crashed. The file was FINAL_final2. Your plate went to the breakout.' },
+  { meal: 'No lunch', line: 'PC update at doors. Gates sends his regards.' },
+  { meal: 'No lunch', line: 'Outlook just mailed the cue sheet to the whole hotel. Stay on the riser.' },
+  { meal: 'No lunch', line: 'Clip’s on a USB. The PC can’t see it. Obviously.' },
+  { meal: 'No lunch', line: 'They need the logo bigger. In Comic Sans. From a PC. Skip the meal.' },
+  { meal: 'No lunch', line: 'Safe Mode. Blue screen. Salad’s in a meeting that doesn’t exist.' },
+  { meal: 'No lunch', line: 'Macros in the playlist. You hate PCs. They know. They did it anyway.' },
+  { meal: 'No lunch', line: 'Last-minute move. Over the camera. Because a slide wouldn’t advance. Thanks Bill.' },
+];
+
+export function cameraTap() {
+  return pickLine(CAMERA_LINES);
+}
+
 /** Tiny joke chair against a column or wall. Does not come out of the pack. */
 export function orphanSeat(room) {
   const holes = room.holes || [];
@@ -165,7 +182,7 @@ export function buildGuestList(count, seed = 20260912) {
 }
 
 /** VIPs take the best-scored seats first. Zeus gets the orphan. Pack stays intact. */
-export function assignGuests(seats, guests, orphan) {
+export function assignGuests(seats, guests, orphan, camera) {
   const ranked = (seats || []).map((s, i) => ({ s, i, score: s.score || 0 }))
     .sort((a, b) => b.score - a.score);
   const placed = [];
@@ -182,7 +199,12 @@ export function assignGuests(seats, guests, orphan) {
     placed.push({ guest: g, seat: ranked[k].s });
     k++;
   }
-  if (ebby) {
+  if (ebby && camera) {
+    placed.push({
+      guest: ebby,
+      seat: { x: camera.x, z: camera.z, rot: 0, joke: true, camera: true, against: 'the camera' },
+    });
+  } else if (ebby) {
     while (k < ranked.length && used.has(ranked[k].i)) k++;
     if (k < ranked.length) {
       used.add(ranked[k].i);

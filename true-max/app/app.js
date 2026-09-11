@@ -11,7 +11,7 @@ import {
 } from '../engine/priorities.mjs';
 import {
   ROLES, MEALS, mealById, buildGuestList, assignGuests, guestAtSeat, mealCounts, roleById,
-  orphanSeat, zeusTap, ebbyTap,
+  orphanSeat, zeusTap, ebbyTap, cameraTap,
 } from './day-of.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -954,7 +954,7 @@ function draw() {
     drawChair(g, it.x, it.z, it.rot || 0, s);
   }
   for (const a of state.dayAssign || []) {
-    if (a.seat && a.seat.joke) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0, s);
+    if (a.seat && a.seat.joke && !a.seat.camera) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0, s);
   }
   drawServicePaths(g);
 
@@ -1148,14 +1148,15 @@ function fillDayChrome() {
         : g.joke === 'ebby'
           ? '<span class="dot">🌶</span>'
           : `<span class="dot" style="background:${m.color}"></span>`;
-      const meal = g.joke === 'zeus' ? 'find him' : g.joke === 'ebby' ? 'chilli' : `${m.label}${g.note ? ' · ' + g.note : ''}`;
+      const meal = g.joke === 'zeus' ? 'find him' : g.joke === 'ebby' ? 'camera · no lunch' : `${m.label}${g.note ? ' · ' + g.note : ''}`;
       return `<button type="button" data-guest="${g.id}" class="${on.trim()}">${dot}<span class="who">${g.vip ? '★ ' : ''}${g.name}</span><span class="meal">${meal}</span></button>`;
     }).join('');
     list.querySelectorAll('[data-guest]').forEach((b) => {
       b.onclick = () => {
         const g = state.dayGuests.find((x) => x.id === b.dataset.guest);
         if (g && g.joke) {
-          const tap = g.joke === 'zeus' ? zeusTap() : ebbyTap();
+          const placed = (state.dayAssign || []).find((a) => a.guest.id === g.id);
+          const tap = g.joke === 'zeus' ? zeusTap() : (placed && placed.seat && placed.seat.camera ? cameraTap() : ebbyTap());
           state.status = g.name + ' · ' + tap.meal + ' · ' + tap.line;
         }
         state.selectedGuest = state.selectedGuest === b.dataset.guest ? null : b.dataset.guest;

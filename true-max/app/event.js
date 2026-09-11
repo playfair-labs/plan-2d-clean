@@ -8,7 +8,7 @@ import { pack } from '../engine/pack.mjs';
 import { scoreLayout, TIERS } from '../engine/seat-score.mjs';
 import { DENSITIES } from '../engine/constraints.mjs';
 import { viewRoom } from '../engine/house-factors.mjs';
-import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap } from './day-of.mjs';
+import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap, cameraTap } from './day-of.mjs';
 import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick } from './av-hang.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -158,8 +158,9 @@ function loadAndDraw() {
   });
   const scored = scoreLayout(viewRoom(room, { show: 'all' }), style, packed, DENSITIES.standard);
   const guests = buildGuestList(scored.seats.length, 9000 + s.id.length);
-  const assign = assignGuests(scored.seats, guests, orphanSeat(room));
   const hang = (s.style === 'boardroom') ? null : buildHang(room, packed);
+  const cam = hang && (hang.kit || []).find((k) => k.type === 'camera');
+  const assign = assignGuests(scored.seats, guests, orphanSeat(room), cam);
   const rec = { packed, scored, assign, style, room, hang };
   cache.set(key, rec);
   applyCache(rec);
@@ -343,7 +344,7 @@ function draw() {
     drawChair(g, seat.x, seat.z, seat.rot || 0);
   }
   for (const a of state.assign || []) {
-    if (a.seat && a.seat.joke) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0);
+    if (a.seat && a.seat.joke && !a.seat.camera) drawChair(g, a.seat.x, a.seat.z, a.seat.rot || 0);
   }
   drawHang(g, true);
 }
@@ -499,6 +500,10 @@ function drawHang(g, cablesOnly) {
         points: lens.map((q) => `${q.x},${q.y}`).join(' '),
         fill: '#111',
       }));
+      g.appendChild(el('text', {
+        x: c.x, y: c.y + 22, 'text-anchor': 'middle', 'font-size': '12',
+        style: 'pointer-events:none',
+      }, ['🌶']));
     }
     if (av && it.label && it.type !== 'riser' && it.type !== 'patch') {
       const c = toScreen(it.x, it.z);
@@ -528,9 +533,13 @@ function showAvSheet(it) {
     html += `<span>Skirt on the ${side} · tap the desk to move it</span>`;
   }
   if (it && it.type === 'camera') {
+    const tap = cameraTap();
+    html = `<b>Ebby</b><span>${tap.meal}</span><span>${tap.line}</span>`;
     const run = (hang.cables || []).find((c) => c.tag === 'XLR camera');
-    html += `<span>Half-deck riser · tripod on axis to the lectern</span>`;
-    if (run) html += `<span>Bring XLR ${run.stock.join(' + ')} m</span>`;
+    if (run) html += `<span>XLR ${run.stock.join(' + ')} m · still no lunch</span>`;
+    $('sheet').innerHTML = html;
+    $('sheet').classList.add('on');
+    return;
   }
   if (it && it.type === 'patch') {
     html += `<span>Patch here — do not run XLRs from FOH to the wedges.</span>`;
@@ -570,7 +579,9 @@ function onSeatTap(wx, wz) {
   const jokeHit = guestAtSeat(state.assign, wx, wz, 520);
   if (jokeHit && jokeHit.guest.joke) {
     state.selected = jokeHit.guest.id;
-    const tap = jokeHit.guest.joke === 'zeus' ? zeusTap() : ebbyTap();
+    const tap = jokeHit.guest.joke === 'zeus'
+      ? zeusTap()
+      : (jokeHit.seat && jokeHit.seat.camera ? cameraTap() : ebbyTap());
     $('sheet').innerHTML = `<b>${jokeHit.guest.name}</b><span>${tap.meal}</span><span>${tap.line}</span>`;
     $('sheet').classList.add('on');
     draw();
