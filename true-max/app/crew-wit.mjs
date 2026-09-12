@@ -40,10 +40,13 @@ const LINES = {
   ],
   camera: [
     'He’s on the riser. The PC can wait. It won’t.',
+    'Forever Al. Even when there’s no camera. Especially then.',
+    'Troy would say you’ll figure it out. He brought the camera. He didn’t figure lunch.',
   ],
   default: [
     'Do the run. Then the joke.',
     'Same plot. Slightly better afternoon.',
+    'Half the kit. You’ll figure it out. That’s Troy. That’s the job.',
   ],
 };
 

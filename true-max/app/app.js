@@ -1157,7 +1157,7 @@ function fillDayChrome() {
         if (g && g.joke) {
           const placed = (state.dayAssign || []).find((a) => a.guest.id === g.id);
           const tap = g.joke === 'zeus' ? zeusTap() : (placed && placed.seat && placed.seat.camera ? cameraTap() : ebbyTap());
-          state.status = g.name + ' · ' + tap.meal + ' · ' + tap.line;
+          state.status = (tap.name || g.name) + ' · ' + tap.meal + ' · ' + tap.line;
         }
         state.selectedGuest = state.selectedGuest === b.dataset.guest ? null : b.dataset.guest;
         render();

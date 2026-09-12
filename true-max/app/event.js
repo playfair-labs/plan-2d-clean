@@ -540,7 +540,7 @@ function showAvSheet(it) {
   }
   if (it && it.type === 'camera') {
     const tap = cameraTap();
-    html = `<b>Ebby</b><span>${tap.meal}</span><span>${tap.line}</span>`;
+    html = `<b>${tap.name || 'Ebby'}</b><span>${tap.meal}</span><span>${tap.line}</span>`;
     const run = (hang.cables || []).find((c) => c.tag === 'XLR camera');
     if (run) html += `<span>XLR ${run.stock.join(' + ')} m · still no lunch</span>`;
     if (state.wit) html += `<span>${crewWit('camera')}</span>`;
@@ -593,7 +593,7 @@ function onSeatTap(wx, wz) {
     const tap = jokeHit.guest.joke === 'zeus'
       ? zeusTap()
       : (jokeHit.seat && jokeHit.seat.camera ? cameraTap() : ebbyTap());
-    $('sheet').innerHTML = `<b>${jokeHit.guest.name}</b><span>${tap.meal}</span><span>${tap.line}</span>`;
+    $('sheet').innerHTML = `<b>${tap.name || jokeHit.guest.name}</b><span>${tap.meal}</span><span>${tap.line}</span>`;
     $('sheet').classList.add('on');
     draw();
     return;

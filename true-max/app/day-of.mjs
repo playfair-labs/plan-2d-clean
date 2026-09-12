@@ -52,6 +52,9 @@ const ZEUS_LINES = [
   { meal: 'Kitchen raid', line: 'Caught him in the walk-in. Back to the orphan chair.' },
   { meal: 'Scrapings', line: 'Whatever missed the bin. Rainbow seat. Worst in the house.' },
   { meal: 'Column tasting menu', line: 'One course: leftovers. View: plaster.' },
+  { meal: 'Florida replay', line: 'He rode the hedge. You asked. Then you couldn’t speak.' },
+  { meal: 'Clubhouse', line: 'He limped in. Two miles. You laughed until it hurt.' },
+  { meal: 'You’ll figure it out', line: 'Troy’s line. Half the kit. Zeus still sent him.' },
 ];
 
 const EBBY_LINES = [
@@ -67,17 +70,18 @@ const EBBY_LINES = [
   { meal: 'Green salad', line: 'Looks innocent. It isn’t. He never is.' },
 ];
 
-function stepper(lines) {
+function stepper(lines, names) {
   let i = 0;
   return () => {
     const line = lines[i % lines.length];
+    const name = names ? names[i % names.length] : undefined;
     i += 1;
-    return line;
+    return name ? { ...line, name } : line;
   };
 }
 
-export const zeusTap = stepper(ZEUS_LINES);
-export const ebbyTap = stepper(EBBY_LINES);
+export const zeusTap = stepper(ZEUS_LINES, ['Zeus', 'Abby']);
+export const ebbyTap = stepper(EBBY_LINES, ['Ebby', 'Zeus']);
 
 const CAMERA_LINES = [
   { meal: 'No lunch', line: 'Sorry Al. PowerPoint ate the clicker. Bill says it’s a feature.' },
@@ -94,9 +98,15 @@ const CAMERA_LINES = [
   { meal: 'No lunch', line: 'Safe Mode. Blue screen. Salad’s in a meeting that doesn’t exist.' },
   { meal: 'No lunch', line: 'Last-minute move. Over the camera. Slide wouldn’t advance. Thanks Bill.' },
   { meal: 'No lunch', line: 'Never a good meal. That’s the recurring bit. You knew.' },
+  { meal: 'No lunch', line: 'Florida. Hedge. Handle stopped. You didn’t. One tracksuit.' },
+  { meal: 'No lunch', line: 'Root in the hedge. Two miles to the clubhouse. Phone cracked. Brock couldn’t breathe.' },
+  { meal: 'No lunch', line: 'Spit it Out. No car. Just the bike and a presentation.' },
+  { meal: 'No lunch', line: 'Only tracksuit. Holes in the knee. He asked. Then he howled.' },
+  { meal: 'No lunch', line: 'Troy sent half the kit. You’ll figure it out. You did. Sort of.' },
+  { meal: 'No lunch', line: 'Gold Coast. Half a van. Famous last words. Roll anyway.' },
 ];
 
-export const cameraTap = stepper(CAMERA_LINES);
+export const cameraTap = stepper(CAMERA_LINES, ['Ebby', 'Zeus', 'Al', 'Abby']);
 
 /** Corner camera even when the job has none. Forever Al. 3D costumes later. */
 export function alCameraSpot(room) {
