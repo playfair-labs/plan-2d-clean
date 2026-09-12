@@ -21,7 +21,11 @@ Soft Soft nickname retired. Ops: SaiD. Mentor owns the path.
 
 The plan-2d-clean `/hawkeye` canvas used a **different origin**. Ignore that for production. **RallyFile JSON is the contract.**
 
-## Purpose (unchanged)
+## Product (one)
+**Rive Pickleball Rally Maker** is the product (Mac 3D world now; iPad twin planned).  
+**Hawkeye line-calling is stage 1 of that product** — not a separate product.
+
+## Purpose
 Live pickleball / tennis broadcast. **Ball on court from data. Not people first.**
 
 ## Milestone #1 — line calling
@@ -47,12 +51,12 @@ Rally Maker was built by **Al asking questions**. That knowledge stays. Reuse th
 
 **GB Rive Animation Lead** (head of Rive) asks Al when a fact is needed. Text is enough. Faster: Al demos in the **Mac 3D Rally Maker** — “it looks like this, goes from here to here.”
 
-## Phone twin (Mentor advise)
-**Yes — worth a phone fibre.** Today the teaching tool is Mac-only. Al is at courts, cars, House of Pickle. The original brief was already “on court.” Same RallyFile, same millimetres, finger + talk: *here → here*. That is the live ingest until cameras.
+## iPad twin (Al wants it — beneficial — do it)
+Whole court, spin, talk, millimetres on **iPad**. Better than Mac for teaching out and about.
 
-Sequence: Hawkeye #1 still on the **existing Mac** tool (`lineCall` + `riveHost`). Phone is the **capture door**, SAID twin, not a new App Store app, not a second court world.
+**SaiD fail-safe:** do **not** thaw or stand a new ASC shelf until Al says exactly **`yes new iOS fibre`**.
 
-Stand the fibre only on Al yes: `yes stand Rally Maker phone twin`.
+Zero-touch brief ready: `SAID_RALLY_MAKER_IPAD_FIBRE.md`. Same RallyFile. Hawkeye = first stage of Rally Maker on that iPad.
 
 ## Titles
 GB Rive Animation Lead + Animators — stand only on Al `yes stand Rive school`.
