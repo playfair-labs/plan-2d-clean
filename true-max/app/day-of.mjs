@@ -55,6 +55,7 @@ const ZEUS_LINES = [
   { meal: 'Florida replay', line: 'He rode the hedge. You asked. Then you couldn’t speak.' },
   { meal: 'Clubhouse', line: 'He limped in. Two miles. You laughed until it hurt.' },
   { meal: 'You’ll figure it out', line: 'Troy’s line. Half the kit. Zeus still sent him.' },
+  { meal: 'Thongs?', line: 'Uniform on. Still ask. Krishna started it. Troy lived it.' },
 ];
 
 const EBBY_LINES = [
@@ -104,6 +105,9 @@ const CAMERA_LINES = [
   { meal: 'No lunch', line: 'Only tracksuit. Holes in the knee. He asked. Then he howled.' },
   { meal: 'No lunch', line: 'Troy sent half the kit. You’ll figure it out. You did. Sort of.' },
   { meal: 'No lunch', line: 'Gold Coast. Half a van. Famous last words. Roll anyway.' },
+  { meal: 'No lunch', line: 'Krishna. Thongs. Border resort. Troy took the call. We still ask.' },
+  { meal: 'No lunch', line: 'Brisbane mining. Five am. Ninety minutes on site. Twelve hours in the car.' },
+  { meal: 'No lunch', line: 'Fairy lights till breakfast. No sleep. The deck still opened.' },
 ];
 
 export const cameraTap = stepper(CAMERA_LINES, ['Ebby', 'Zeus', 'Al', 'Abby']);
