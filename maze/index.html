@@ -202,25 +202,28 @@ Graph.prototype.drawPipe = function (a, b, dashed) {
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  if (dashed) ctx.setLineDash([10, 10]);
-  ctx.strokeStyle = "#0a0c10";
-  ctx.lineWidth = R + 10;
-  ctx.beginPath(); ctx.moveTo(p1.x + px * 3, p1.y + py * 3); ctx.lineTo(p2.x + px * 3, p2.y + py * 3); ctx.stroke();
+  if (dashed) ctx.setLineDash([14, 12]);
+  ctx.strokeStyle = "rgba(0,0,0,0.65)";
+  ctx.lineWidth = R + 14;
+  ctx.beginPath(); ctx.moveTo(p1.x + px * 4, p1.y + py * 4); ctx.lineTo(p2.x + px * 4, p2.y + py * 4); ctx.stroke();
   const g = ctx.createLinearGradient(p1.x - px * R, p1.y - py * R, p1.x + px * R, p1.y + py * R);
-  g.addColorStop(0, "#4a5568");
-  g.addColorStop(0.22, "#9aa7b8");
-  g.addColorStop(0.45, "#2a3344");
-  g.addColorStop(0.7, "#151b26");
-  g.addColorStop(1, "#0b0e14");
+  g.addColorStop(0, "#e8eef6");
+  g.addColorStop(0.16, "#8b98ab");
+  g.addColorStop(0.38, "#3d4a5c");
+  g.addColorStop(0.62, "#1a222e");
+  g.addColorStop(1, "#07090d");
   ctx.strokeStyle = g;
   ctx.lineWidth = R;
   ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.strokeStyle = "rgba(255,255,255,0.22)";
-  ctx.lineWidth = Math.max(3, R * 0.18);
+  ctx.strokeStyle = "#05070b";
+  ctx.lineWidth = R * 0.58;
+  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = Math.max(2, R * 0.12);
   ctx.beginPath();
-  ctx.moveTo(p1.x - px * R * 0.28, p1.y - py * R * 0.28);
-  ctx.lineTo(p2.x - px * R * 0.28, p2.y - py * R * 0.28);
+  ctx.moveTo(p1.x - px * R * 0.32, p1.y - py * R * 0.32);
+  ctx.lineTo(p2.x - px * R * 0.32, p2.y - py * R * 0.32);
   ctx.stroke();
   ctx.restore();
   return { p1, p2, len, ux, uy, px, py, R };
@@ -236,16 +239,20 @@ Graph.prototype.drawLiquid = function (seg, t0, t1, color) {
   const y2 = seg.p1.y + seg.uy * seg.len * b;
   ctx.save();
   ctx.lineCap = "round";
-  const inner = seg.R * 0.52;
-  ctx.strokeStyle = color;
-  ctx.globalAlpha = 0.95;
+  const inner = seg.R * 0.48;
+  const lg = ctx.createLinearGradient(x1 - seg.px * inner, y1 - seg.py * inner, x1 + seg.px * inner, y1 + seg.py * inner);
+  lg.addColorStop(0, "#fff6");
+  lg.addColorStop(0.35, color);
+  lg.addColorStop(1, "#0006");
+  ctx.strokeStyle = lg;
+  ctx.globalAlpha = 1;
   ctx.lineWidth = inner;
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.45)";
-  ctx.lineWidth = inner * 0.28;
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = inner * 0.22;
   ctx.beginPath();
-  ctx.moveTo(x1 - seg.px * inner * 0.18, y1 - seg.py * inner * 0.18);
-  ctx.lineTo(x2 - seg.px * inner * 0.18, y2 - seg.py * inner * 0.18);
+  ctx.moveTo(x1 - seg.px * inner * 0.22, y1 - seg.py * inner * 0.22);
+  ctx.lineTo(x2 - seg.px * inner * 0.22, y2 - seg.py * inner * 0.22);
   ctx.stroke();
   ctx.restore();
 };
@@ -292,7 +299,9 @@ Graph.prototype.paint = function () {
 Graph.prototype.runRoute = function (ids) {
   this.bolus = [];
   for (let i = 0; i < ids.length - 1; i++) {
-    this.bolus.push({ edge: { a: ids[i], b: ids[i + 1] }, t: -i * 0.35, alive: true });
+    for (let k = 0; k < 3; k++) {
+      this.bolus.push({ edge: { a: ids[i], b: ids[i + 1] }, t: -i * 0.42 - k * 0.16, alive: true });
+    }
   }
   this.running = true;
 };
@@ -310,9 +319,9 @@ Graph.prototype.xy = function (ev) {
   return { x: ev.clientX - r.left, y: ev.clientY - r.top };
 };
 
-const sysG = new Graph(document.getElementById("sys"), SYS, 26);
-const leftG = new Graph(document.getElementById("left"), LEFT, 20);
-const rightG = new Graph(document.getElementById("right"), RIGHT, 24);
+const sysG = new Graph(document.getElementById("sys"), SYS, 36);
+const leftG = new Graph(document.getElementById("left"), LEFT, 28);
+const rightG = new Graph(document.getElementById("right"), RIGHT, 34);
 const graphs = [sysG, leftG, rightG];
 
 function pickRoute(text) {
