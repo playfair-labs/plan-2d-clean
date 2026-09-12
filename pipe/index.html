@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PIPE · live tracer</title>
+<style>
+  :root {
+    --bg: #07080c;
+    --ink: #eef2f7;
+    --mute: #8b93a7;
+    --idea: #3ee0ff;
+    --make: #c9a33a;
+    --store: #6b7280;
+    --gold: #c9a33a;
+    --wrong: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  body { display: flex; flex-direction: column; min-height: 100dvh; }
+  header {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 14px 16px 8px; letter-spacing: .12em;
+  }
+  header b { color: var(--gold); font-size: 13px; }
+  header span { color: var(--mute); font-size: 12px; letter-spacing: .08em; }
+  #stage { flex: 1; position: relative; overflow: hidden; }
+  svg { width: 100%; height: 100%; display: block; }
+  .node-hit { cursor: pointer; }
+  .legend { display: flex; gap: 14px; padding: 0 16px 8px; font-size: 12px; color: var(--mute); flex-wrap: wrap; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 99px; margin-right: 6px; vertical-align: -1px; }
+  #list { max-height: 28vh; overflow: auto; padding: 0 12px 8px; }
+  .pkt {
+    display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: start;
+    background: #11141c; border: 1px solid #1c2230; border-radius: 12px; padding: 8px 10px; margin: 6px 0;
+  }
+  .pkt.on { border-color: color-mix(in srgb, var(--c) 55%, #1c2230); }
+  .dot { width: 10px; height: 10px; border-radius: 99px; background: var(--c); margin-top: 5px; }
+  .pkt small { color: var(--mute); }
+  .row { display: flex; gap: 8px; padding: 8px 12px 10px; }
+  .row textarea {
+    flex: 1; resize: none; min-height: 48px; border-radius: 12px; border: 1px solid #2a3142;
+    background: #0d1016; color: var(--ink); padding: 10px 12px; font: inherit;
+  }
+  .row button, .acts button {
+    border: 0; border-radius: 999px; padding: 12px 16px; font: 600 14px/1 inherit; cursor: pointer;
+  }
+  #go { background: var(--idea); color: #041016; }
+  .acts { display: flex; gap: 8px; padding: 0 12px 8px; flex-wrap: wrap; }
+  .acts .make { background: var(--make); color: #16120a; }
+  .acts .done { background: #2a3142; color: var(--ink); }
+  .acts .reroute { background: #3a1d1d; color: #ffb4b4; }
+  #next {
+    margin: 0 12px 16px; padding: 12px 14px; border: 1px solid var(--gold);
+    border-radius: 12px; color: var(--ink); font-size: 15px;
+  }
+  #next em { color: var(--gold); font-style: normal; }
+  #toast {
+    position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+    background: #16120a; color: var(--make); border: 1px solid var(--make);
+    padding: 8px 12px; border-radius: 999px; font-size: 13px; display: none; z-index: 5;
+  }
+</style>
+</head>
+<body>
+<header>
+  <b>PIPE</b>
+  <span>live tracer · watch the signal · tap a node if wrong</span>
+</header>
+<div class="legend">
+  <span><i class="sw" style="background:var(--idea)"></i>new idea → answer</span>
+  <span><i class="sw" style="background:var(--make)"></i>make into something (loop)</span>
+  <span><i class="sw" style="background:var(--store)"></i>App Store · exits · back-office gone</span>
+</div>
+<div id="stage">
+  <div id="toast"></div>
+  <svg id="svg" viewBox="0 0 1000 420" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+<div id="list"></div>
+<div class="acts" id="acts"></div>
+<div class="row">
+  <textarea id="say" placeholder="Speak a thought. It becomes a colored packet in the pipe."></textarea>
+  <button id="go" type="button">Send</button>
+</div>
+<div id="next">Your next human action to bring this dream to reality is: <em>type a thought and tap Send. Watch the packet.</em></div>
+<script>
+const IDEA = "#3ee0ff", MAKE = "#c9a33a", STORE = "#9aa3b5";
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+
+const NODES = [
+  { id: "speak", label: "YOU SPEAK", x: 90, y: 200 },
+  { id: "clarify", label: "CLARIFY", x: 280, y: 200 },
+  { id: "you", label: "ANSWER YOU", x: 480, y: 200 },
+  { id: "make", label: "MAKE LOOP", x: 700, y: 200 },
+  { id: "store", label: "APP STORE", x: 910, y: 200 },
+];
+
+const PATHS = {
+  idea: "M 90 200 C 160 200, 210 200, 280 200 C 350 200, 410 200, 480 200",
+  toMake: "M 480 200 C 560 200, 630 200, 700 200",
+  loop: "M 700 200 C 700 110, 820 110, 820 200 C 820 290, 700 290, 700 200",
+  toStore: "M 700 200 C 780 200, 850 200, 910 200",
+  exit: "M 910 200 C 960 200, 990 160, 1020 80",
+};
+
+function el(name, attrs) {
+  const n = document.createElementNS(NS, name);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  return n;
+}
+
+function drawPipe() {
+  svg.innerHTML = "";
+  const defs = el("defs", {});
+  defs.innerHTML = `
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="pipeFill" x1="0" x2="1"><stop offset="0" stop-color="#1a2233"/><stop offset="1" stop-color="#121826"/></linearGradient>
+  `;
+  svg.appendChild(defs);
+  const spine = "M 90 200 L 910 200";
+  svg.appendChild(el("path", { d: spine, stroke: "#1c2740", "stroke-width": 28, fill: "none", "stroke-linecap": "round" }));
+  svg.appendChild(el("path", { d: spine, stroke: "url(#pipeFill)", "stroke-width": 18, fill: "none", "stroke-linecap": "round" }));
+  svg.appendChild(el("path", { d: PATHS.loop, stroke: "#3a2e12", "stroke-width": 16, fill: "none", "stroke-linecap": "round" }));
+  svg.appendChild(el("path", { d: PATHS.loop, stroke: "#2a2414", "stroke-width": 8, fill: "none", "stroke-dasharray": "8 10" }));
+  svg.appendChild(el("path", { d: PATHS.exit, stroke: "#1a1d24", "stroke-width": 10, fill: "none", "stroke-linecap": "round" }));
+
+  for (const n of NODES) {
+    const g = el("g", { class: "node-hit", "data-id": n.id });
+    g.appendChild(el("circle", { cx: n.x, cy: n.y, r: 22, fill: "#0b0e14", stroke: "#3a445c", "stroke-width": 2 }));
+    const t = el("text", { x: n.x, y: n.y - 34, fill: "#8b93a7", "font-size": "11", "text-anchor": "middle", "letter-spacing": "0.12em" });
+    t.textContent = n.label;
+    g.appendChild(t);
+    g.addEventListener("click", () => tapNode(n.id));
+    svg.appendChild(g);
+  }
+  window._pktLayer = el("g", { id: "pkts" });
+  svg.appendChild(window._pktLayer);
+}
+
+function pathEl(d) {
+  const p = el("path", { d, fill: "none" });
+  svg.appendChild(p);
+  return p;
+}
+const pathCache = {};
+function along(key, t) {
+  if (!pathCache[key]) pathCache[key] = pathEl(PATHS[key]);
+  const p = pathCache[key];
+  const len = p.getTotalLength();
+  const pt = p.getPointAtLength(Math.max(0, Math.min(1, t)) * len);
+  return pt;
+}
+
+let packets = [];
+let selected = null;
+let rerouteArmed = false;
+let idn = 1;
+
+function addIdea(text) {
+  const pkt = {
+    id: idn++,
+    text: text.trim(),
+    color: IDEA,
+    mode: "idea",
+    path: "idea",
+    t: 0,
+    speed: 0.55,
+    loopUntil: null,
+    done: false,
+    wait: null,
+    answer: null,
+  };
+  packets.push(pkt);
+  selected = pkt.id;
+  setNext("watch the cyan packet. If it is the wrong node, tap the node it should be at.");
+  renderList();
+}
+
+function tapNode(id) {
+  const pkt = packets.find((p) => p.id === selected && !p.done);
+  if (!pkt) {
+    toast("Send a thought first, then tap a node to reroute.");
+    return;
+  }
+  reroute(pkt, id);
+}
+
+function reroute(pkt, nodeId) {
+  toast("Rerouted → " + nodeId);
+  if (nodeId === "make") {
+    pkt.mode = "make"; pkt.color = MAKE; pkt.path = "toMake"; pkt.t = 0; pkt.wait = null;
+  } else if (nodeId === "store") {
+    finish(pkt);
+  } else if (nodeId === "you") {
+    pkt.mode = "idea"; pkt.color = IDEA; pkt.path = "idea"; pkt.t = 0.92; pkt.wait = "you";
+  } else if (nodeId === "clarify") {
+    pkt.mode = "idea"; pkt.color = IDEA; pkt.path = "idea"; pkt.t = 0.45; pkt.wait = null;
+  } else if (nodeId === "speak") {
+    pkt.mode = "idea"; pkt.color = IDEA; pkt.path = "idea"; pkt.t = 0; pkt.wait = null;
+  }
+  setNext("packet is on " + nodeId + ". Watch it, or tap another node.");
+  renderList();
+}
+
+function finish(pkt) {
+  pkt.mode = "store"; pkt.color = STORE; pkt.path = "toStore"; pkt.t = 0; pkt.wait = null; pkt.loopUntil = null;
+}
+
+function setNext(s) {
+  document.getElementById("next").innerHTML =
+    "Your next human action to bring this dream to reality is: <em>" + s + "</em>";
+}
+function toast(s) {
+  const el = document.getElementById("toast");
+  el.textContent = s; el.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => { el.style.display = "none"; }, 2200);
+}
+
+function renderList() {
+  const box = document.getElementById("list");
+  box.innerHTML = packets.filter((p) => !p.exited).map((p) => {
+    const where = p.wait || p.path;
+    return `<div class="pkt ${p.id===selected?"on":""}" style="--c:${p.color}" data-id="${p.id}">
+      <div class="dot"></div>
+      <div><b>${esc(p.text)}</b><br><small>${p.mode} · ${where}${p.answer ? " · " + esc(p.answer) : ""}</small></div>
+      <small>#${p.id}</small>
+    </div>`;
+  }).join("") || `<div class="pkt" style="--c:#333"><div class="dot"></div><div><small>No signals in the pipe yet.</small></div></div>`;
+  box.querySelectorAll(".pkt[data-id]").forEach((n) => {
+    n.onclick = () => { selected = Number(n.dataset.id); renderActs(); renderList(); };
+  });
+  renderActs();
+}
+
+function renderActs() {
+  const pkt = packets.find((p) => p.id === selected && !p.done);
+  const acts = document.getElementById("acts");
+  if (!pkt) { acts.innerHTML = ""; return; }
+  acts.innerHTML = `
+    <button class="make" type="button">Make into something</button>
+    <button class="done" type="button">Finished → App Store</button>
+    <button class="reroute" type="button">Wrong — I will tap the right node</button>
+  `;
+  acts.querySelector(".make").onclick = () => {
+    pkt.mode = "make"; pkt.color = MAKE; pkt.path = "toMake"; pkt.t = 0; pkt.wait = null;
+    setNext("watch the gold loop. When the prototype is finished, tap Finished → App Store.");
+    renderList();
+  };
+  acts.querySelector(".done").onclick = () => {
+    finish(pkt);
+    setNext("it is leaving the visible pipe. Back-office is invisible. Send the next thought, or watch it exit.");
+    renderList();
+  };
+  acts.querySelector(".reroute").onclick = () => {
+    toast("Tap the node it should have gone to.");
+    setNext("tap the node on the pipe that is correct.");
+  };
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function tick(dt) {
+  for (const p of packets) {
+    if (p.exited || p.wait) continue;
+    p.t += p.speed * dt;
+    if (p.path === "idea" && p.t >= 1) {
+      p.t = 1; p.wait = "you";
+      p.answer = "Heard. Stay on this thought. Make it, finish it, or reroute.";
+      setNext("read the answer. Tap Make into something, or tap a node if this went the wrong way.");
+    } else if (p.path === "toMake" && p.t >= 1) {
+      p.path = "loop"; p.t = 0; p.speed = 0.35;
+    } else if (p.path === "loop") {
+      if (p.t >= 1) p.t = 0;
+    } else if (p.path === "toStore" && p.t >= 1) {
+      p.path = "exit"; p.t = 0; p.speed = 0.7;
+    } else if (p.path === "exit" && p.t >= 1) {
+      p.exited = true; p.done = true;
+    }
+  }
+}
+
+function drawPkts() {
+  const layer = window._pktLayer;
+  while (layer.firstChild) layer.removeChild(layer.firstChild);
+  for (const p of packets) {
+    if (p.exited) continue;
+    const pt = along(p.path, p.t);
+    const c = el("circle", {
+      cx: pt.x, cy: pt.y, r: p.id === selected ? 11 : 8,
+      fill: p.color, filter: "url(#glow)",
+    });
+    layer.appendChild(c);
+    if (p.id === selected) {
+      const ring = el("circle", { cx: pt.x, cy: pt.y, r: 16, fill: "none", stroke: p.color, "stroke-width": "1.5", opacity: "0.6" });
+      layer.appendChild(ring);
+    }
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  tick(dt);
+  drawPkts();
+  requestAnimationFrame(frame);
+}
+
+document.getElementById("go").onclick = send;
+document.getElementById("say").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+function send() {
+  const t = document.getElementById("say");
+  const v = t.value.trim();
+  if (!v) return;
+  addIdea(v);
+  t.value = "";
+  renderList();
+}
+
+drawPipe();
+renderList();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
