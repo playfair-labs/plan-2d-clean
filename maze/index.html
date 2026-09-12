@@ -53,7 +53,7 @@
 </div>
 <div id="stage">
   <div class="pane">
-    <div class="tag">SYSTEM · locked mermaid 13 Sep · as-is</div>
+    <div class="tag">SYSTEM · locked mermaid 13 Sep · as-is · SaiD + Source in the trench</div>
     <canvas id="sys"></canvas>
   </div>
   <div class="pane" style="display:grid; grid-template-columns:1fr 1fr;">
@@ -68,6 +68,10 @@
   </div>
 </div>
 <script>
+const CREW = { said: new Image(), source: new Image() };
+CREW.said.src = "dudes/said.png";
+CREW.source.src = "dudes/source.png";
+
 const nextEl = document.getElementById("next");
 function setNext(s) {
   nextEl.innerHTML = "Your next human action to bring this dream to reality is: <em>" + s + "</em>";
@@ -295,6 +299,40 @@ Graph.prototype.paint = function () {
     this.drawLiquid(hit.seg, tail, head, this.tint);
   }
   for (const n of this.model.nodes) this.drawNode(n);
+  this.drawCrew();
+};
+Graph.prototype.hot = function (id) {
+  return this.bolus.some((b) => b.edge && (b.edge.a === id || b.edge.b === id) && b.t > -0.1 && b.t < 1.15);
+};
+Graph.prototype.drawSprite = function (img, n, scale, dx) {
+  if (!img || !img.complete || !img.naturalWidth) return;
+  const ctx = this.ctx;
+  const p = this.pt(n);
+  const h = this.fat * 4.4 * (scale || 1);
+  const w = h * (img.naturalWidth / img.naturalHeight);
+  const bob = Math.sin(this.phase * 2.4 + (dx || 0)) * 2.5;
+  const x = p.x - w / 2 + (dx || 0);
+  const y = p.y - h + bob - this.fat * 0.2;
+  if (this.hot(n.id)) {
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.ellipse(p.x + (dx || 0) * 0.2, p.y, w * 0.45, 8, 0, 0, Math.PI * 2);
+    ctx.fillStyle = this.tint;
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.drawImage(img, x, y, w, h);
+};
+Graph.prototype.drawCrew = function () {
+  if (this.model !== SYS) return;
+  const said = this.model.nodes.find((n) => n.id === "SaiD");
+  const gb = this.model.nodes.find((n) => n.id === "GB");
+  if (said) {
+    this.drawSprite(CREW.said, said, 1.05, -this.fat * 1.6);
+    this.drawSprite(CREW.source, said, 0.95, this.fat * 1.8);
+  }
+  if (gb) this.drawSprite(CREW.source, gb, 1.0, 0);
 };
 Graph.prototype.runRoute = function (ids) {
   this.bolus = [];
@@ -323,6 +361,7 @@ const sysG = new Graph(document.getElementById("sys"), SYS, 36);
 const leftG = new Graph(document.getElementById("left"), LEFT, 28);
 const rightG = new Graph(document.getElementById("right"), RIGHT, 34);
 const graphs = [sysG, leftG, rightG];
+CREW.said.onload = CREW.source.onload = () => graphs.forEach((g) => g.paint());
 
 function pickRoute(text) {
   const t = text.toLowerCase();
