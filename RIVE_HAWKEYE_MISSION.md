@@ -1,37 +1,46 @@
 # Rive mission — locked 13 Sep 2026 (Mentor / Source)
 
-Soft Soft nickname retired. Ops: SaiD. Mentor owns this path. **Rive school is NOT stood** until Al says `yes stand Rive school`.
+Soft Soft nickname retired. Ops: SaiD. Mentor owns the path.
 
-## Purpose
-Live **pickleball / tennis broadcast**. Realistic **Rive ball on court** (not people first). We feed **data** (speed, arc, path, bounce) → Rive draws the **instant real shot**.
+**Rive is NOT greenfield.** There is already a Rive Extra High that has been animating for Al, with tools and 3D world. Fold it. Do not reinvent.
 
-## Milestone #1 — line calling (Hawkeye-class)
-When a player hits a winner close to the line: animate the **ball** to show **exactly where it went**. In or out. Not character animation. **Ball + court + data in → instant visual out.**
+## Existing brain (reuse)
 
-## What Rive is for (and is not)
-Rive **renders** the ball the data already decided. It does **not** invent Hawkeye. Tracking / millimetre path lives outside. Rive **View Model** numbers bind to ball X/Y (and Z as scale). That is the skill.
+| Seat | Path | What it already is |
+|---|---|---|
+| SaiD Rive Shelf Extra High | `/Users/playfair/Documents/rive-craft/said-shelf` | Speak → `scene.rml` → `rive . --verify && rive . --once` → `build/said-shelf.riv`. `rally.json` ingest. |
+| Rally Maker (3D World) | `/Users/playfair/Documents/rive-craft/Rive Pickleball Rally Maker` | Court mm **locked**, click/talk rallies, `flight.ts` `ballAt()`, `Court3D.tsx`, spin, `riveHost.setBall(xMm,yMm,zMm)` + `playRally(json)`. Mac app + `npm run dev`. |
+| Loop docs | `rive-craft/said-speak-build-loop.md` | Al never types build. |
 
-People / dudes / costumes = later. Rive school wait.
+## Court millimetres (LOCKED in Rally Maker — do not replace)
 
-## Titles (locked elsewhere — do not stand)
-- GB Rive Animation Lead
-- Animators  
-Stand **only** on Al: `yes stand Rive school`.
+- xMm: 0 = near baseline, 13411.2 = far baseline  
+- yMm: 0 = left sideline, 6096 = right  
+- zMm: 0 = surface, up positive  
+- net xMm = 6705.6 · kitchen 4572 / 8839.2 · centre yMm = 3048  
 
-## Curriculum (what the team must learn)
-1. **Court in millimetres** — pickleball 13 411 × 6 096 mm, kitchen 2 134 mm, lines 50 mm. Tennis later, same idea.
-2. **Shot schema** (the contract): `{ t, x, y, z, bounce, inOut, speedMs }` world millimetres, origin at centre or a corner — pick one and never change.
-3. **Rive Editor** — artboard, timelines, one state machine.
-4. **View Models / data binding** — Number properties `ballX` `ballY` `ballZ` bound to the ball’s transform. This is Hawkeye. Not old SM inputs.
-5. **Runtime** — `@rive-app/canvas` (web) then iOS. `advanceAndApply(dt)` every frame. Mutate numbers from the shot path.
-6. **Line test** — ball radius vs line polygon. IN / OUT is code, Rive only shows it.
-7. **Replay** — same schema from a log, not live cameras first.
-8. **Later ball craft** — smear, squash on bounce, spin. Still no people.
-9. **Cameras / tracking** — after the renderer is honest.
-10. **People** — last.
+The plan-2d-clean `/hawkeye` canvas used a **different origin**. Ignore that for production. **RallyFile JSON is the contract.**
 
-## Drive now (no Al decision)
-Mentor ships a **canvas Hawkeye** that already uses the shot schema. When school stands, Rive replaces the canvas ball, same numbers.
+## Purpose (unchanged)
+Live pickleball / tennis broadcast. **Ball on court from data. Not people first.**
+
+## Milestone #1 — line calling
+Winner close to the line → show exactly where the ball went. IN/OUT.
+
+**Implementation (reuse):** `bounceCall(xMm, yMm)` in Rally Maker `src/lineCall.ts` on a bounce event. Feed the same path `riveHost.setBall` already expects. Rive artboard binds `ballX` `ballY` `ballZ` to those millimetres. said-shelf already builds `.riv`.
+
+## What the team must learn (on TOP of the shelf, not instead)
+1. Rally Maker court + RallyFile (already built — read it).  
+2. `flight.ts` / `ballAt` (already built).  
+3. `lineCall.ts` (Hawkeye on that court).  
+4. Rive **View Models** bound to ball X/Y/Z — fill in `riveHost.ts` stub (do not invent a second host).  
+5. said-shelf speak-build loop (`rive schema`, never invent types).  
+6. Replay from `rallies/*.json` (kitchen winners already exist).  
+7. Live POST `/event` already specified in GROK-BUILD-RALLY-APP.md.  
+8. People last. Rive school still **not stood**.
+
+## Titles
+GB Rive Animation Lead + Animators — stand only on Al `yes stand Rive school`.
 
 ## Water maze
-SaiD + Source hard-hats stay in the maze flow. Unrelated to Rive school.
+SaiD + Source hard-hats stay in `/maze`. Unrelated to reinventing Rive.
