@@ -9,7 +9,7 @@ import { scoreLayout, TIERS } from '../engine/seat-score.mjs';
 import { DENSITIES } from '../engine/constraints.mjs';
 import { viewRoom } from '../engine/house-factors.mjs';
 import { buildGuestList, assignGuests, guestAtSeat, mealById, orphanSeat, zeusTap, ebbyTap, cameraTap } from './day-of.mjs';
-import { buildHang, deskSkirtPoints, nextSkirt, xlrSummary, pickingList, formatPick, ensureAlCamera } from './av-hang.mjs';
+import { buildHang, avOpsDrape, pickingList, formatPick, ensureAlCamera } from './av-hang.mjs';
 import { crewWit } from './crew-wit.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -73,7 +73,6 @@ const state = {
   selected: null,
   cam: { x: 0, y: 0, k: 1 },
   hang: null,
-  skirtSide: 'n',
   wit: false,
 };
 
@@ -409,10 +408,12 @@ function drawHang(g, cablesOnly) {
     }));
   }
   if (hang.desk) {
-    const sk = deskSkirtPoints(hang.desk, state.skirtSide);
-    g.appendChild(el('path', {
-      d: worldPath(sk), fill: 'none', stroke: '#1a1612', 'stroke-width': '1.6',
-    }));
+    for (const leg of avOpsDrape(hang.desk)) {
+      g.appendChild(el('path', {
+        d: worldPath(leg.pts), fill: 'none', stroke: '#5a5348',
+        'stroke-width': av ? '1.8' : '1.4',
+      }));
+    }
   }
   for (const it of hang.kit || []) {
     const p = toScreen(it.x - it.w / 2, it.z + it.d / 2);
@@ -533,10 +534,10 @@ function drawHang(g, cablesOnly) {
 function showAvSheet(it) {
   const hang = state.hang;
   const pick = formatPick(pickingList(hang?.cables || []));
-  const side = { n: 'stage edge', s: 'door edge', e: 'right', w: 'left' }[state.skirtSide];
   let html = `<b>${it ? it.label : 'AV'}</b>`;
   if (it && it.type === 'avops') {
-    html += `<span>Skirt on the ${side} · tap the desk to move it</span>`;
+    const corner = (hang.desk && hang.desk.corner) === 'se' ? 'house right' : 'house left';
+    html += `<span>Corner ${corner}. Drape across the front and the room side. Wall side open so you can get in.</span>`;
   }
   if (it && it.type === 'camera') {
     const tap = cameraTap();
@@ -600,12 +601,6 @@ function onSeatTap(wx, wz) {
   }
   if (state.role === 'av') {
     const kit = hitKit(wx, wz);
-    if (kit && kit.type === 'avops') {
-      state.skirtSide = nextSkirt(state.skirtSide);
-      showAvSheet(kit);
-      draw();
-      return;
-    }
     if (kit) { showAvSheet(kit); draw(); return; }
     $('sheet').classList.remove('on');
     return;

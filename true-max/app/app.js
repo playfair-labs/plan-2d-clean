@@ -1,4 +1,5 @@
 import { ROOMS, HIRE, GAPS, STYLES, styleById, SEATS, c2cForGap, doorKeepBox, holeKeepBox, canPlaceOnSurface, isSurfaceType, isPlaceableKitType, occupiedRoundR, usesOccupiedKeep, stageFrontKeepBoxes, baysForRoom, verticalCutBoxes } from '../engine/world.mjs';
+import { avOpsDrape } from './av-hang.mjs';
 import { pack } from '../engine/pack.mjs';
 import { analyseService, trimTablesForGuests, SERVICE_TIERS } from '../engine/service-heat.mjs';
 import { pointInPoly, circleInPoly, circleHitsAabb, overlap, aabbOf, bboxOf } from '../engine/geom.mjs';
@@ -969,6 +970,17 @@ function draw() {
     const c = worldToSvg(it.x, it.z);
     const lab = it.type === 'avops' ? 'AV Ops' : it.type === 'lectern' ? 'Lectern' : it.type;
     g.appendChild(el('text', { x: c.x, y: c.y + 3, 'text-anchor': 'middle', 'font-size': 9, fill: it.type === 'lectern' ? '#fff' : '#333' }, [lab]));
+    if (it.type === 'avops') {
+      const bb = bboxOf(r.room);
+      const desk = { ...it, drape: it.x < (bb.minX + bb.maxX) / 2 ? ['n', 'e'] : ['n', 'w'] };
+      for (const leg of avOpsDrape(desk)) {
+        const d = leg.pts.map((p, i) => {
+          const q = worldToSvg(p[0], p[1]);
+          return (i ? 'L' : 'M') + q.x + ',' + q.y;
+        }).join(' ');
+        g.appendChild(el('path', { d, fill: 'none', stroke: '#5a5348', 'stroke-width': 1.5 }));
+      }
+    }
   }
 
   // scale bar 5 m

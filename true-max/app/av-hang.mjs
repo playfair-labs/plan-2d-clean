@@ -95,13 +95,40 @@ export function drapeLines(room) {
 
 export function deskSkirtPoints(desk, side) {
   const hw = desk.w / 2, hd = desk.d / 2;
-  const inset = 40;
+  const inset = 20;
   let a, b;
-  if (side === 'n') { a = [desk.x - hw + 80, desk.z + hd - inset]; b = [desk.x + hw - 80, desk.z + hd - inset]; }
-  else if (side === 's') { a = [desk.x - hw + 80, desk.z - hd + inset]; b = [desk.x + hw - 80, desk.z - hd + inset]; }
-  else if (side === 'e') { a = [desk.x + hw - inset, desk.z - hd + 80]; b = [desk.x + hw - inset, desk.z + hd - 80]; }
-  else { a = [desk.x - hw + inset, desk.z - hd + 80]; b = [desk.x - hw + inset, desk.z + hd - 80]; }
-  return wavyPoints(a, b, 55, 280);
+  if (side === 'n') { a = [desk.x - hw, desk.z + hd + inset]; b = [desk.x + hw, desk.z + hd + inset]; }
+  else if (side === 's') { a = [desk.x - hw, desk.z - hd - inset]; b = [desk.x + hw, desk.z - hd - inset]; }
+  else if (side === 'e') { a = [desk.x + hw + inset, desk.z + hd]; b = [desk.x + hw + inset, desk.z - hd]; }
+  else { a = [desk.x - hw - inset, desk.z + hd]; b = [desk.x - hw - inset, desk.z - hd]; }
+  return wavyPoints(a, b, 80, 420);
+}
+
+const OPS_GAP = 900;
+
+/** Corner FOH: gap to the wall so a tech can get in. Drape front + room side only. */
+export function placeAvOps(room, corner = 'sw') {
+  const bb = bboxOf(room.room);
+  const w = HIRE.avops.w, d = HIRE.avops.d;
+  const gap = Math.min(OPS_GAP, Math.max(600, (bb.maxX - bb.minX) * 0.07));
+  const back = Math.min(OPS_GAP, Math.max(550, (bb.maxZ - bb.minZ) * 0.1));
+  if (corner === 'se') {
+    return {
+      ...box('avops', bb.maxX - gap - w / 2, bb.minZ + back + d / 2, w, d, 'AV Ops'),
+      corner: 'se',
+      drape: ['n', 'w'],
+    };
+  }
+  return {
+    ...box('avops', bb.minX + gap + w / 2, bb.minZ + back + d / 2, w, d, 'AV Ops'),
+    corner: 'sw',
+    drape: ['n', 'e'],
+  };
+}
+
+export function avOpsDrape(desk) {
+  const sides = desk.drape || (desk.corner === 'se' ? ['n', 'w'] : ['n', 'e']);
+  return sides.map((side) => ({ side, pts: deskSkirtPoints(desk, side) }));
 }
 
 export const STOCK = [5, 10, 20, 30];
@@ -188,7 +215,7 @@ export function buildHang(room, packed) {
       box('speaker', bb.minX + 1800, mid.z - 900, HIRE.speaker.w, HIRE.speaker.d, 'FOH L'),
       box('speaker', bb.maxX - 1800, mid.z - 900, HIRE.speaker.w, HIRE.speaker.d, 'FOH R'),
     ];
-    const desk = box('avops', bb.minX + (bb.maxX - bb.minX) * 0.32, bb.minZ + Math.min(1600, (bb.maxZ - bb.minZ) * 0.18), HIRE.avops.w, HIRE.avops.d, 'AV Ops');
+    const desk = placeAvOps(room, 'sw');
     kit.push(lectern, ...speakers, desk);
     addCameraRiser(room, kit, cables, desk, mid.x);
     const west = bb.minX + 400, aisle = bb.minZ + 900;
@@ -215,7 +242,7 @@ export function buildHang(room, packed) {
     box('speaker', block.minX - 1600, block.cz, HIRE.speaker.w, HIRE.speaker.d, 'FOH L'),
     box('speaker', block.maxX + 1600, block.cz, HIRE.speaker.w, HIRE.speaker.d, 'FOH R'),
   ];
-  const desk = box('avops', bb.minX + (bb.maxX - bb.minX) * 0.32, bb.minZ + Math.min(1600, (bb.maxZ - bb.minZ) * 0.18), HIRE.avops.w, HIRE.avops.d, 'AV Ops');
+  const desk = placeAvOps(room, 'sw');
   const rear = [
     box('speaker', bb.minX + 2200, bb.minZ + 2200, HIRE.speaker.w, HIRE.speaker.d, 'Rear L'),
     box('speaker', bb.maxX - 2200, bb.minZ + 2200, HIRE.speaker.w, HIRE.speaker.d, 'Rear R'),
