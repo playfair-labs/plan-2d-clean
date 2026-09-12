@@ -39,6 +39,21 @@ Winner close to the line → show exactly where the ball went. IN/OUT.
 7. Live POST `/event` already specified in GROK-BUILD-RALLY-APP.md.  
 8. People last. Rive school still **not stood**.
 
+## How Al taught it
+Rally Maker was built by **Al asking questions**. That knowledge stays. Reuse the tool. Do not quiz Al to rebuild it.
+
+## Who talks to Al about Rive
+**Mentor does not grill Al on Rive.** Mentor runs many projects.
+
+**GB Rive Animation Lead** (head of Rive) asks Al when a fact is needed. Text is enough. Faster: Al demos in the **Mac 3D Rally Maker** — “it looks like this, goes from here to here.”
+
+## Phone twin (Mentor advise)
+**Yes — worth a phone fibre.** Today the teaching tool is Mac-only. Al is at courts, cars, House of Pickle. The original brief was already “on court.” Same RallyFile, same millimetres, finger + talk: *here → here*. That is the live ingest until cameras.
+
+Sequence: Hawkeye #1 still on the **existing Mac** tool (`lineCall` + `riveHost`). Phone is the **capture door**, SAID twin, not a new App Store app, not a second court world.
+
+Stand the fibre only on Al yes: `yes stand Rally Maker phone twin`.
+
 ## Titles
 GB Rive Animation Lead + Animators — stand only on Al `yes stand Rive school`.
 
