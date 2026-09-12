@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WATER MAZE · live plumbing</title>
+<style>
+  :root { --gold:#c9a33a; --ink:#e8edf5; --mute:#8b93a7; --bg:#05070b; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font:15px/1.35 -apple-system, BlinkMacSystemFont, sans-serif; overflow:hidden; }
+  body { display:flex; flex-direction:column; height:100dvh; }
+  #next {
+    flex:none; margin:8px 12px 0; padding:10px 14px; border:1px solid var(--gold);
+    border-radius:10px; font-size:16px;
+  }
+  #next em { color:var(--gold); font-style:normal; }
+  #bar {
+    flex:none; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    padding:8px 12px;
+  }
+  #bar input[type=text], #addName { flex:1; min-width:180px; background:#0d1118; color:var(--ink); border:1px solid #2a3344; border-radius:8px; padding:10px 12px; font:inherit; }
+  #bar button, #hold {
+    border:0; border-radius:999px; padding:10px 14px; font:600 13px inherit; cursor:pointer;
+  }
+  #go { background:#3ee0ff; color:#041016; }
+  #hold { background:#1a2433; color:var(--ink); }
+  #hold.on { background:#3ee0ff; color:#041016; }
+  #stop { background:#3a1d1d; color:#ffb4b4; }
+  #add { background:#2a2414; color:var(--gold); }
+  #fs { background:#1a2433; color:var(--ink); }
+  label { color:var(--mute); font-size:12px; display:flex; align-items:center; gap:6px; }
+  #stage { flex:1; display:grid; grid-template-rows: 1.15fr 1fr; min-height:0; }
+  .pane { position:relative; border-top:1px solid #1a2230; }
+  .tag {
+    position:absolute; left:10px; top:8px; z-index:2; letter-spacing:.14em; font-size:11px; color:var(--gold);
+  }
+  .tag.bad { color:#ff8a8a; }
+  canvas { width:100%; height:100%; display:block; }
+</style>
+</head>
+<body>
+<div id="next">Your next human action to bring this dream to reality is: <em>type or hold, then Enter / Go. Watch the water.</em></div>
+<div id="bar">
+  <input id="say" type="text" placeholder="Ask. Enter/Go runs the water.">
+  <button id="hold" type="button">Hold</button>
+  <button id="go" type="button">Go</button>
+  <button id="stop" type="button">Stop</button>
+  <label>Speed <input id="speed" type="range" min="0.15" max="3" step="0.05" value="1"></label>
+  <label>Water <input id="tint" type="color" value="#3ee0ff"></label>
+  <input id="addName" type="text" placeholder="Named pipe">
+  <button id="add" type="button">Add pipe</button>
+  <button id="fs" type="button">Full screen</button>
+</div>
+<div id="stage">
+  <div class="pane">
+    <div class="tag">SYSTEM · locked mermaid 13 Sep · as-is</div>
+    <canvas id="sys"></canvas>
+  </div>
+  <div class="pane" style="display:grid; grid-template-columns:1fr 1fr;">
+    <div class="pane" style="border-right:1px solid #1a2230; border-top:0;">
+      <div class="tag bad">LEFT · Myles schmozzle</div>
+      <canvas id="left"></canvas>
+    </div>
+    <div class="pane" style="border-top:0;">
+      <div class="tag">RIGHT · oil machine · same size</div>
+      <canvas id="right"></canvas>
+    </div>
+  </div>
+</div>
+<script>
+const nextEl = document.getElementById("next");
+function setNext(s) {
+  nextEl.innerHTML = "Your next human action to bring this dream to reality is: <em>" + s + "</em>";
+}
+
+function N(id, label, x, y) { return { id, label, x, y }; }
+function E(a, b, dashed) { return { a, b, dashed: !!dashed }; }
+
+/* Locked system mermaid AS-IS — do not redesign */
+const SYS = {
+  nodes: [
+    N("Al", "Al", 0.50, 0.10),
+    N("CoS", "CoS\nfamily / home / PA", 0.22, 0.28),
+    N("Bots", "Grok Bots\nunder CoS", 0.50, 0.28),
+    N("Fast", "Mega-fast\non screen", 0.50, 0.46),
+    N("SaiD", "SaiD\nsystems + handoff", 0.50, 0.62),
+    N("Proto", "Prototyping\nfibre", 0.22, 0.78),
+    N("GBart", "GB graphics\nExtra High", 0.50, 0.78),
+    N("GB", "GB Extra High\nfarm", 0.78, 0.78),
+    N("DTR", "Dreams to Reality\nfibre circles", 0.50, 0.90),
+    N("Next", "Next human action", 0.78, 0.90),
+  ],
+  edges: [
+    E("Al", "CoS"), E("CoS", "Bots"), E("Al", "Bots"),
+    E("Bots", "Fast"), E("Fast", "SaiD"),
+    E("SaiD", "Proto"), E("SaiD", "GBart"), E("SaiD", "GB"),
+    E("Proto", "DTR"), E("GBart", "DTR"), E("GB", "DTR"), E("SaiD", "DTR"),
+    E("DTR", "Next"), E("Next", "Al"),
+    E("CoS", "Al", true),
+  ],
+  routes: {
+    default: ["Al", "Bots", "Fast", "SaiD", "DTR", "Next", "Al"],
+    home: ["Al", "CoS", "Bots", "Fast", "SaiD", "DTR", "Next", "Al"],
+    art: ["Al", "Bots", "Fast", "SaiD", "GBart", "DTR", "Next", "Al"],
+    heavy: ["Al", "Bots", "Fast", "SaiD", "GB", "DTR", "Next", "Al"],
+    proto: ["Al", "Bots", "Fast", "SaiD", "Proto", "DTR", "Next", "Al"],
+  }
+};
+
+const LEFT = {
+  nodes: [
+    N("Client", "Client call", 0.12, 0.20),
+    N("StaffA", "Staff A", 0.38, 0.12),
+    N("StaffB", "Staff B", 0.62, 0.18),
+    N("StaffC", "Staff C", 0.88, 0.14),
+    N("Excel", "Excel v3/v7", 0.18, 0.48),
+    N("Docs", "Google Docs", 0.48, 0.42),
+    N("Chat", "Group chat", 0.78, 0.46),
+    N("Email", "Email chain", 0.30, 0.70),
+    N("Phone", "Phone tag", 0.58, 0.68),
+    N("Driver", "Driver wait", 0.84, 0.72),
+    N("Wh", "Warehouse", 0.22, 0.90),
+    N("Job", "Maybe job", 0.70, 0.92),
+  ],
+  edges: [
+    E("Client","StaffA"), E("Client","StaffB"), E("Client","StaffC"),
+    E("StaffA","StaffB"), E("StaffB","StaffC"), E("StaffC","StaffA"),
+    E("StaffA","Excel"), E("StaffB","Docs"), E("StaffC","Chat"),
+    E("Excel","Docs"), E("Docs","Email"), E("Chat","Phone"),
+    E("Excel","Phone"), E("Email","Driver"), E("Phone","Driver"),
+    E("Driver","Wh"), E("Wh","Job"), E("Email","Job"), E("Chat","Job"),
+    E("StaffA","Email"), E("Docs","Driver"), E("Client","Chat"),
+  ]
+};
+
+const RIGHT = {
+  nodes: [
+    N("R1", "1 Book", 0.06, 0.50),
+    N("R2", "2 Kit list", 0.16, 0.50),
+    N("R3", "3 Pick", 0.26, 0.50),
+    N("R4", "4 Load van", 0.36, 0.50),
+    N("R5", "5 Drive", 0.46, 0.50),
+    N("R6", "6 Arrive", 0.56, 0.50),
+    N("R7", "7 Rig", 0.66, 0.50),
+    N("R8", "8 Show", 0.76, 0.50),
+    N("R9", "9 Strike", 0.86, 0.38),
+    N("R10", "10 Return", 0.86, 0.68),
+    N("R11", "11 Invoice", 0.70, 0.86),
+    N("R12", "12 Done", 0.48, 0.86),
+  ],
+  edges: [
+    E("R1","R2"), E("R2","R3"), E("R3","R4"), E("R4","R5"),
+    E("R5","R6"), E("R6","R7"), E("R7","R8"), E("R8","R9"),
+    E("R9","R10"), E("R10","R11"), E("R11","R12"),
+  ]
+};
+
+function Graph(canvas, model, fat) {
+  this.cv = canvas;
+  this.ctx = canvas.getContext("2d");
+  this.model = model;
+  this.fat = fat || 22;
+  this.phase = 0;
+  this.running = false;
+  this.bolus = [];
+  this.drag = null;
+  this.pendingAdd = null;
+  this.custom = [];
+  this.tint = "#3ee0ff";
+  this.speed = 1;
+  this.resize();
+}
+Graph.prototype.resize = function () {
+  const r = this.cv.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  this.cv.width = Math.max(4, r.width * dpr);
+  this.cv.height = Math.max(4, r.height * dpr);
+  this.w = r.width; this.h = r.height; this.dpr = dpr;
+};
+Graph.prototype.pt = function (n) {
+  return { x: n.x * this.w, y: n.y * this.h };
+};
+Graph.prototype.nodeAt = function (x, y) {
+  let best = null, bd = 28;
+  for (const n of this.model.nodes) {
+    const p = this.pt(n);
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d < bd) { bd = d; best = n; }
+  }
+  return best;
+};
+Graph.prototype.allEdges = function () {
+  return this.model.edges.concat(this.custom);
+};
+Graph.prototype.drawPipe = function (a, b, dashed) {
+  const ctx = this.ctx, p1 = this.pt(a), p2 = this.pt(b);
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len;
+  const px = -uy, py = ux;
+  const R = this.fat;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  if (dashed) ctx.setLineDash([10, 10]);
+  ctx.strokeStyle = "#0a0c10";
+  ctx.lineWidth = R + 10;
+  ctx.beginPath(); ctx.moveTo(p1.x + px * 3, p1.y + py * 3); ctx.lineTo(p2.x + px * 3, p2.y + py * 3); ctx.stroke();
+  const g = ctx.createLinearGradient(p1.x - px * R, p1.y - py * R, p1.x + px * R, p1.y + py * R);
+  g.addColorStop(0, "#4a5568");
+  g.addColorStop(0.22, "#9aa7b8");
+  g.addColorStop(0.45, "#2a3344");
+  g.addColorStop(0.7, "#151b26");
+  g.addColorStop(1, "#0b0e14");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = R;
+  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.lineWidth = Math.max(3, R * 0.18);
+  ctx.beginPath();
+  ctx.moveTo(p1.x - px * R * 0.28, p1.y - py * R * 0.28);
+  ctx.lineTo(p2.x - px * R * 0.28, p2.y - py * R * 0.28);
+  ctx.stroke();
+  ctx.restore();
+  return { p1, p2, len, ux, uy, px, py, R };
+};
+Graph.prototype.drawLiquid = function (seg, t0, t1, color) {
+  const ctx = this.ctx;
+  const a = Math.max(0, Math.min(1, t0));
+  const b = Math.max(0, Math.min(1, t1));
+  if (b <= a) return;
+  const x1 = seg.p1.x + seg.ux * seg.len * a;
+  const y1 = seg.p1.y + seg.uy * seg.len * a;
+  const x2 = seg.p1.x + seg.ux * seg.len * b;
+  const y2 = seg.p1.y + seg.uy * seg.len * b;
+  ctx.save();
+  ctx.lineCap = "round";
+  const inner = seg.R * 0.52;
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = 0.95;
+  ctx.lineWidth = inner;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.45)";
+  ctx.lineWidth = inner * 0.28;
+  ctx.beginPath();
+  ctx.moveTo(x1 - seg.px * inner * 0.18, y1 - seg.py * inner * 0.18);
+  ctx.lineTo(x2 - seg.px * inner * 0.18, y2 - seg.py * inner * 0.18);
+  ctx.stroke();
+  ctx.restore();
+};
+Graph.prototype.drawNode = function (n) {
+  const ctx = this.ctx, p = this.pt(n), r = this.fat * 0.95;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(p.x, p.y + 3, r, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fill();
+  const g = ctx.createRadialGradient(p.x - r * 0.3, p.y - r * 0.4, 2, p.x, p.y, r);
+  g.addColorStop(0, "#d5dde8");
+  g.addColorStop(0.35, "#6b778c");
+  g.addColorStop(1, "#1a2230");
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = "#c9a33a"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = "#f2f5fa";
+  ctx.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  const lines = n.label.split("\n");
+  lines.forEach((ln, i) => ctx.fillText(ln, p.x, p.y + r + 14 + i * 13));
+  ctx.restore();
+};
+Graph.prototype.paint = function () {
+  const ctx = this.ctx;
+  ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+  ctx.clearRect(0, 0, this.w, this.h);
+  const segs = [];
+  for (const e of this.allEdges()) {
+    const a = this.model.nodes.find((n) => n.id === e.a);
+    const b = this.model.nodes.find((n) => n.id === e.b);
+    if (!a || !b) continue;
+    segs.push({ e, seg: this.drawPipe(a, b, e.dashed) });
+  }
+  for (const b of this.bolus) {
+    if (!b.edge) continue;
+    const hit = segs.find((s) => s.e.a === b.edge.a && s.e.b === b.edge.b);
+    if (!hit) continue;
+    const head = b.t;
+    const tail = b.t - 0.22;
+    this.drawLiquid(hit.seg, tail, head, this.tint);
+  }
+  for (const n of this.model.nodes) this.drawNode(n);
+};
+Graph.prototype.runRoute = function (ids) {
+  this.bolus = [];
+  for (let i = 0; i < ids.length - 1; i++) {
+    this.bolus.push({ edge: { a: ids[i], b: ids[i + 1] }, t: -i * 0.35, alive: true });
+  }
+  this.running = true;
+};
+Graph.prototype.tick = function (dt) {
+  if (!this.running) { this.paint(); return; }
+  this.phase += dt;
+  for (const b of this.bolus) {
+    b.t += dt * 0.55 * this.speed;
+  }
+  this.paint();
+};
+Graph.prototype.stop = function () { this.running = false; };
+Graph.prototype.xy = function (ev) {
+  const r = this.cv.getBoundingClientRect();
+  return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+};
+
+const sysG = new Graph(document.getElementById("sys"), SYS, 26);
+const leftG = new Graph(document.getElementById("left"), LEFT, 20);
+const rightG = new Graph(document.getElementById("right"), RIGHT, 24);
+const graphs = [sysG, leftG, rightG];
+
+function pickRoute(text) {
+  const t = text.toLowerCase();
+  if (/home|family|pa|cos/.test(t)) return { g: sysG, ids: SYS.routes.home, where: "system · home/CoS" };
+  if (/art|graphic|draw|uy[eé]n|hero/.test(t)) return { g: sysG, ids: SYS.routes.art, where: "system · graphics" };
+  if (/heavy|farm|lasting/.test(t)) return { g: sysG, ids: SYS.routes.heavy, where: "system · Extra High farm" };
+  if (/proto|prototype/.test(t)) return { g: sysG, ids: SYS.routes.proto, where: "system · prototype fibre" };
+  if (/schmozz|chaos|excel|left|mess|staff|email/.test(t)) {
+    return { g: leftG, ids: LEFT.nodes.map((n) => n.id).concat("Job"), where: "LEFT Myles schmozzle" };
+  }
+  if (/oil|right|simple|boom|machine|clean/.test(t)) {
+    return { g: rightG, ids: RIGHT.nodes.map((n) => n.id), where: "RIGHT oil machine" };
+  }
+  return { g: sysG, ids: SYS.routes.default, where: "system · show me NOW" };
+}
+
+function go() {
+  const text = document.getElementById("say").value.trim() || "show me NOW";
+  const r = pickRoute(text);
+  graphs.forEach((g) => { g.stop(); g.bolus = []; });
+  r.g.runRoute(r.ids);
+  setNext("watch the water on " + r.where + ". If wrong, tap the node it should hit. Drag nodes. Stop anytime.");
+}
+
+document.getElementById("go").onclick = go;
+document.getElementById("say").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); go(); }
+});
+document.getElementById("stop").onclick = () => {
+  graphs.forEach((g) => g.stop());
+  setNext("water stopped. Divert by tapping a node, or Go again.");
+};
+document.getElementById("speed").oninput = (e) => {
+  const v = Number(e.target.value);
+  graphs.forEach((g) => { g.speed = v; });
+};
+document.getElementById("tint").oninput = (e) => {
+  graphs.forEach((g) => { g.tint = e.target.value; });
+};
+document.getElementById("fs").onclick = () => {
+  document.documentElement.requestFullscreen?.();
+};
+document.getElementById("add").onclick = () => {
+  graphs.forEach((g) => { g.pendingAdd = "from"; });
+  setNext("tap FROM node, then TO node. Name is in the box.");
+};
+
+let divert = false;
+graphs.forEach((g) => {
+  g.cv.addEventListener("pointerdown", (ev) => {
+    const { x, y } = g.xy(ev);
+    const n = g.nodeAt(x, y);
+    if (!n) return;
+    if (g.pendingAdd === "from") {
+      g._from = n; g.pendingAdd = "to";
+      setNext("now tap TO node for pipe «" + (document.getElementById("addName").value || n.id) + "»");
+      return;
+    }
+    if (g.pendingAdd === "to") {
+      const name = document.getElementById("addName").value.trim() || (g._from.id + "→" + n.id);
+      g.custom.push({ a: g._from.id, b: n.id, dashed: false, name });
+      g.pendingAdd = null;
+      setNext("named pipe " + name + " added. Go to run water. Drag a node if the layout is wrong.");
+      return;
+    }
+    if (g.running) {
+      const last = g.bolus[g.bolus.length - 1];
+      g.bolus.push({ edge: { a: last ? last.edge.b : n.id, b: n.id }, t: 0 });
+      setNext("diverted into " + n.id + ". Watch.");
+      return;
+    }
+    g.drag = { n, ox: n.x, oy: n.y, px: x, py: y };
+    g.cv.setPointerCapture(ev.pointerId);
+  });
+  g.cv.addEventListener("pointermove", (ev) => {
+    if (!g.drag) return;
+    const { x, y } = g.xy(ev);
+    g.drag.n.x = Math.max(0.04, Math.min(0.96, x / g.w));
+    g.drag.n.y = Math.max(0.08, Math.min(0.92, y / g.h));
+  });
+  g.cv.addEventListener("pointerup", () => { g.drag = null; });
+});
+
+const holdBtn = document.getElementById("hold");
+let rec = null;
+holdBtn.onpointerdown = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { setNext("this browser has no speech. Type instead, then Go."); return; }
+  rec = new SR();
+  rec.lang = "en-AU";
+  rec.interimResults = true;
+  rec.onresult = (e) => {
+    let t = "";
+    for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+    document.getElementById("say").value = t;
+  };
+  rec.start();
+  holdBtn.classList.add("on");
+};
+holdBtn.onpointerup = holdBtn.onpointerleave = () => {
+  holdBtn.classList.remove("on");
+  try { rec && rec.stop(); } catch (_) {}
+  if (document.getElementById("say").value.trim()) go();
+};
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  graphs.forEach((g) => g.tick(dt));
+  requestAnimationFrame(frame);
+}
+window.addEventListener("resize", () => graphs.forEach((g) => g.resize()));
+requestAnimationFrame(frame);
+
+setTimeout(() => graphs.forEach((g) => { g.resize(); g.paint(); }), 50);
+</script>
+</body>
+</html>
