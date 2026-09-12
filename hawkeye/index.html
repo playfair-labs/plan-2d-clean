@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAWKEYE · ball + court · data in</title>
+<style>
+  html, body { margin:0; height:100%; background:#0a0c10; color:#e8edf5; font:15px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; }
+  body { display:flex; flex-direction:column; height:100dvh; }
+  #next { margin:8px 12px 0; padding:10px 14px; border:1px solid #c9a33a; border-radius:10px; }
+  #next em { color:#c9a33a; font-style:normal; }
+  #bar { display:flex; gap:8px; padding:8px 12px; align-items:center; flex-wrap:wrap; }
+  button { border:0; border-radius:999px; padding:10px 16px; font:600 13px inherit; cursor:pointer; background:#3ee0ff; color:#041016; }
+  #call { font-size:42px; letter-spacing:.2em; padding:0 12px; }
+  #call.in { color:#3ee0ff; }
+  #call.out { color:#ff6b6b; }
+  canvas { flex:1; width:100%; display:block; }
+  small { color:#8b93a7; }
+</style>
+</head>
+<body>
+<div id="next">Your next human action to bring this dream to reality is: <em>tap Replay. Watch the ball and the line. This is the schema Rive will bind later.</em></div>
+<div id="bar">
+  <button id="go" type="button">Replay close winner</button>
+  <span id="call">—</span>
+  <small>pickleball mm · ball only · not Rive yet · not people</small>
+</div>
+<canvas id="c"></canvas>
+<script>
+/** Shot schema (locked). World mm. Origin = court centre. +x right, +y toward nets? +y toward north baseline. */
+const COURT = { W: 6096, L: 13411, KITCHEN: 2134, LINE: 50, NET: 0 };
+const BALL_R = 37;
+
+function shotCloseWinner() {
+  const pts = [];
+  for (let i = 0; i <= 48; i++) {
+    const u = i / 48;
+    const x = -400 + u * 3380;
+    const y = -6200 + u * 12640;
+    const z = 900 * Math.sin(u * Math.PI) * (1 - u * 0.15);
+    pts.push({ t: u * 0.92, x, y, z, bounce: u > 0.91 });
+  }
+  const last = pts[pts.length - 1];
+  const halfW = COURT.W / 2, halfL = COURT.L / 2;
+  const inX = Math.abs(last.x) <= halfW + BALL_R * 0.15;
+  const inY = Math.abs(last.y) <= halfL + BALL_R * 0.15;
+  last.inOut = inX && inY ? "IN" : "OUT";
+  last.speedMs = 18.4;
+  return pts;
+}
+
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+let path = shotCloseWinner();
+let playT = 0, playing = false;
+
+function resize() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = cv.clientWidth * dpr;
+  cv.height = cv.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function worldTo(p) {
+  const pad = 40;
+  const w = cv.clientWidth - pad * 2;
+  const h = cv.clientHeight - pad * 2;
+  const sx = w / COURT.W;
+  const sy = h / COURT.L;
+  const s = Math.min(sx, sy);
+  return {
+    x: cv.clientWidth / 2 + p.x * s,
+    y: cv.clientHeight / 2 - p.y * s,
+    s,
+  };
+}
+function drawCourt() {
+  const w = cv.clientWidth, h = cv.clientHeight;
+  ctx.fillStyle = "#0a0c10"; ctx.fillRect(0, 0, w, h);
+  const a = worldTo({ x: -COURT.W / 2, y: -COURT.L / 2 });
+  const b = worldTo({ x: COURT.W / 2, y: COURT.L / 2 });
+  const s = a.s;
+  ctx.fillStyle = "#1c6b4a";
+  ctx.fillRect(a.x, b.y, COURT.W * s, COURT.L * s);
+  ctx.strokeStyle = "#f4f7fb";
+  ctx.lineWidth = Math.max(2, COURT.LINE * s);
+  ctx.strokeRect(a.x, b.y, COURT.W * s, COURT.L * s);
+  ctx.beginPath();
+  ctx.moveTo(w / 2, b.y); ctx.lineTo(w / 2, a.y);
+  const kN = worldTo({ x: -COURT.W / 2, y: COURT.KITCHEN });
+  const kS = worldTo({ x: -COURT.W / 2, y: -COURT.KITCHEN });
+  ctx.moveTo(a.x, kN.y); ctx.lineTo(a.x + COURT.W * s, kN.y);
+  ctx.moveTo(a.x, kS.y); ctx.lineTo(a.x + COURT.W * s, kS.y);
+  ctx.stroke();
+  ctx.fillStyle = "#c9a33a";
+  ctx.font = "11px -apple-system";
+  ctx.fillText("NVZ / kitchen", a.x + 8, cv.clientHeight / 2 + 14);
+}
+function atT(t) {
+  if (t <= 0) return path[0];
+  if (t >= 1) return path[path.length - 1];
+  const u = t * (path.length - 1);
+  const i = Math.floor(u), f = u - i;
+  const A = path[i], B = path[i + 1];
+  return { x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f, z: A.z + (B.z - A.z) * f };
+}
+function paint() {
+  resize();
+  drawCourt();
+  ctx.strokeStyle = "rgba(62,224,255,0.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  path.forEach((p, i) => {
+    const q = worldTo(p);
+    if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+  });
+  ctx.stroke();
+  const p = atT(playT);
+  const q = worldTo(p);
+  const r = Math.max(4, BALL_R * q.s * (1 + p.z / 2500));
+  ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = "#d7ff3e"; ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.stroke();
+  const last = path[path.length - 1];
+  const end = worldTo(last);
+  ctx.strokeStyle = last.inOut === "IN" ? "#3ee0ff" : "#ff6b6b";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(end.x, end.y, BALL_R * end.s * 1.4, 0, Math.PI * 2); ctx.stroke();
+}
+let lastNow = performance.now();
+function frame(now) {
+  const dt = (now - lastNow) / 1000; lastNow = now;
+  if (playing) {
+    playT += dt * 0.85;
+    if (playT >= 1) {
+      playT = 1; playing = false;
+      const call = path[path.length - 1].inOut;
+      const el = document.getElementById("call");
+      el.textContent = call;
+      el.className = call === "IN" ? "in" : "out";
+      document.getElementById("next").innerHTML =
+        "Your next human action to bring this dream to reality is: <em>look at the ball vs the line. That number is the call. Rive will bind the same millimetres later.</em>";
+    }
+  }
+  paint();
+  requestAnimationFrame(frame);
+}
+document.getElementById("go").onclick = () => {
+  path = shotCloseWinner();
+  playT = 0; playing = true;
+  document.getElementById("call").textContent = "—";
+};
+window.addEventListener("resize", paint);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
